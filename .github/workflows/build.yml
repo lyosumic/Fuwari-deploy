@@ -86,4 +86,4 @@ jobs:
           DEPLOY_WORKER_NAME: fuwari-deploy-smoke
           SITE_URL: https://fuwari-deploy.example.com/
           DEPLOY_REPOSITORY: ${{ github.repository }}
-          WRANGLER_SEND_METRICS: false
+          WRANGLER_SEND_METRICS: 'false'

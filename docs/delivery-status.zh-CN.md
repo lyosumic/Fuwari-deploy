@@ -26,6 +26,16 @@
 - Biome CI 通过，保留一个非阻断的字符串模板风格提示。
 - Windows `deploy.cmd --help` 执行成功，退出码 0；采用 CRLF，并在 Git 中禁用该文件的行尾转换。
 - 首次 Wrangler 下载出现 Windows 可选运行时缺失；工具改为显式安装匹配版本，避免 npm 静默跳过该依赖。
+- GitHub 干净 Windows / Node.js 22 环境完整执行部署程序：冻结安装、构建、资源检查、Wrangler `deploy --dry-run` 全部通过。[验证运行](https://github.com/lyosumic/Fuwari-deploy/actions/runs/38065646050)。
+- 同一 GitHub 运行中的 Astro 检查、构建和内容发布验证全部成功，代码质量工作流也成功。
+- 本机 Wrangler 运行时重试下载仍出现 ECONNRESET；未修改个人 npm 缓存或代理，改用上述干净环境验证。真实使用仍需可访问 npm registry 的网络。
+- 为空项目、笔记上传和项目上传目录新增 `.gitkeep` 占位，便于 GitHub 保留目录结构，不修改已有内容。
+
+## GitHub 交付
+
+- 源码：[lyosumic/Fuwari-deploy](https://github.com/lyosumic/Fuwari-deploy)，分支 `main`。
+- 版本标签与 Release：[`deploy-v0.1.0`](https://github.com/lyosumic/Fuwari-deploy/releases/tag/deploy-v0.1.0)。
+- 软件附件：`deploy-v0.1.0-windows.zip`（完整源码 + 双击启动器，需 Node.js），附 `SHA256SUMS.txt`。
 
 ## 仍需用户首次配置及线上验证
 
@@ -40,4 +50,4 @@
 
 发布源码位于原工作区下的 `deploy-source/`，Release 产物位于 `release-assets/`。原内容位于工作区根目录；不要把 `deploy-source` 再复制进源码仓库。
 
-用量检查：本次过程中最近一次记录，5 小时额度剩余约 55%，每周约 11%。百分比是账户共享额度快照，不是本项目独立预算。
+用量检查：本次过程中最近一次记录，5 小时额度剩余约 50%，每周约 11%。百分比是账户共享额度快照，不是本项目独立预算。

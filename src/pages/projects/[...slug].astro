@@ -1,0 +1,43 @@
+---
+import { render } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import { Icon } from "astro-icon/components";
+import Markdown from "../../components/misc/Markdown.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { attachmentUrl } from "../../utils/file-utils";
+import {
+	getProjects,
+	type Project,
+	projectStatuses,
+} from "../../utils/projects-utils";
+import { url } from "../../utils/url-utils";
+export const getStaticPaths = (async () =>
+	(await getProjects()).map((project) => ({
+		params: { slug: project.slug },
+		props: { project },
+	}))) satisfies GetStaticPaths;
+interface Props {
+	project: Project;
+}
+const { project } = Astro.props;
+const { Content, headings } = await render(project);
+---
+<MainGridLayout title={project.data.title} description={project.data.description} headings={headings}>
+    <article class="card-base p-6 md:p-9 mb-4" data-pagefind-body>
+        <a class="link text-sm text-[var(--primary)]" href={url("/projects/")} data-pagefind-ignore>← 所有项目</a>
+        <div class="flex flex-wrap items-center gap-3 mt-6 mb-4 text-sm text-50">
+            <span class="rounded-full bg-[var(--btn-regular-bg)] text-[var(--primary)] px-3 py-1">{projectStatuses[project.data.status]}</span>
+            <time datetime={project.data.published.toISOString()}>{project.data.published.toISOString().slice(0, 10)}</time>
+            {project.data.updated && <span>更新于 {project.data.updated.toISOString().slice(0, 10)}</span>}
+        </div>
+        <h1 class="text-90 text-3xl md:text-4xl font-bold break-words mb-4" data-pagefind-meta="title">{project.data.title}</h1>
+        <p class="text-50 leading-relaxed mb-5">{project.data.description}</p>
+        <div class="flex flex-wrap gap-2 mb-6">{project.data.technologies.map((tech) => <span class="text-sm text-[var(--primary)] bg-[var(--btn-regular-bg)] px-3 py-1 rounded-lg">{tech}</span>)}</div>
+        <div class="flex flex-wrap gap-3 mb-8" data-pagefind-ignore>
+            {project.data.source && <a href={attachmentUrl(project.data.source)} download data-swup-ignore class="btn-regular rounded-xl px-4 py-3 font-bold gap-2"><Icon name="material-symbols:download-rounded" />下载源代码</a>}
+            {project.data.repository && <a href={project.data.repository} target="_blank" rel="noopener noreferrer" class="btn-regular rounded-xl px-4 py-3 gap-2"><Icon name="fa6-brands:github" />代码仓库</a>}
+            {project.data.demo && <a href={project.data.demo} target="_blank" rel="noopener noreferrer" class="btn-regular rounded-xl px-4 py-3 gap-2"><Icon name="material-symbols:open-in-new-rounded" />在线演示</a>}
+        </div>
+        {(project.body || "").trim() && <div class="border-t border-[var(--line-color)] pt-6"><Markdown class="mt-2"><Content /></Markdown></div>}
+    </article>
+</MainGridLayout>

@@ -1,0 +1,22 @@
+{
+	"avatar": "/avatar.jpeg",
+	"name": "Lyosumic",
+	"bio": "欢迎来到我的博客，我在这里分享一些有趣的东西。",
+	"links": [
+		{
+			"name": "BiliBili",
+			"icon": "/icons/bilibili.svg",
+			"url": "https://www.bilibili.com/"
+		},
+		{
+			"name": "DeepSeek",
+			"icon": "/icons/deepseek.svg",
+			"url": "https://chat.deepseek.com/"
+		},
+		{
+			"name": "HFUT",
+			"icon": "/icons/school.svg",
+			"url": "https://www.hfut.edu.cn/"
+		}
+	]
+}

@@ -1,0 +1,293 @@
+---
+import { Icon } from "astro-icon/components";
+import { navBarConfig, siteConfig } from "../config";
+import { LinkPresets } from "../constants/link-presets";
+import { LinkPreset, type NavBarLink } from "../types/config";
+import { url } from "../utils/url-utils";
+import LightDarkSwitch from "./LightDarkSwitch.svelte";
+import Search from "./Search.svelte";
+import DisplaySettings from "./widget/DisplaySettings.svelte";
+import NavMenuPanel from "./widget/NavMenuPanel.astro";
+
+const className = Astro.props.class;
+const homePath = url("/");
+function isCurrentLink(link: NavBarLink) {
+	if (link.external) return false;
+	const target = url(link.url).replace(/\/$/, "") || "/";
+	const current = Astro.url.pathname.replace(/\/$/, "") || "/";
+	const home = homePath.replace(/\/$/, "") || "/";
+	return target === home
+		? current === home ||
+				/^\d+$/.test(current.slice(home === "/" ? 1 : home.length + 1))
+		: current === target || current.startsWith(target + "/");
+}
+
+let links: NavBarLink[] = navBarConfig.links.map(
+	(item: NavBarLink | LinkPreset): NavBarLink => {
+		if (typeof item === "number") {
+			return LinkPresets[item];
+		}
+		return item;
+	},
+);
+---
+<div id="navbar" class="z-50 onload-animation">
+    <div class:list={[
+        className,
+        "navbar-capsule"]}>
+        <a href={url('/')} class="navbar-brand btn-plain scale-animation font-bold active:scale-95">
+            <div class="flex flex-row text-[var(--primary)] items-center text-md">
+                <Icon name="material-symbols:home-outline-rounded" class="brand-icon text-[1.5rem] mr-2" />
+                <span class="brand-title">{siteConfig.title}</span>
+            </div>
+        </a>
+        <nav class="navbar-links hidden lg:flex" aria-label="主导航">
+            <span class="nav-selection" aria-hidden="true"></span>
+            {links.map((l) => {
+                return <a aria-label={l.name} href={l.external ? l.url : url(l.url)} target={l.external ? "_blank" : null}
+                          rel={l.external ? "noopener noreferrer" : undefined} data-site-nav={!l.external || undefined}
+                          aria-current={isCurrentLink(l) ? "page" : undefined}
+                          class="nav-link btn-plain font-bold active:scale-95"
+                >
+                    <div class="flex items-center">
+                        {l.name}
+                        {l.external && <Icon name="fa6-solid:arrow-up-right-from-square" class="text-[0.875rem] transition -translate-y-[1px] ml-1 text-black/[0.2] dark:text-white/[0.2]"></Icon>}
+                    </div>
+                </a>;
+            })}
+        </nav>
+        <div class="navbar-actions flex">
+            <!--<SearchPanel client:load>-->
+            <Search client:only="svelte"></Search>
+            {!siteConfig.themeColor.fixed && (
+                    <button aria-label="Display Settings" class="btn-plain scale-animation rounded-full h-11 w-11 active:scale-90" id="display-settings-switch">
+                        <Icon name="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
+                    </button>
+            )}
+            <LightDarkSwitch client:only="svelte"></LightDarkSwitch>
+            <button aria-label="导航菜单" aria-expanded="false" aria-controls="nav-menu-panel" name="Nav Menu" class="btn-plain scale-animation rounded-full w-11 h-11 active:scale-90 lg:!hidden" id="nav-menu-switch">
+                <Icon name="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
+            </button>
+        </div>
+        <NavMenuPanel links={links}></NavMenuPanel>
+        <DisplaySettings client:only="svelte"></DisplaySettings>
+    </div>
+</div>
+
+<script>
+function loadButtonScript() {
+    let settingBtn = document.getElementById("display-settings-switch");
+    if (settingBtn) {
+        settingBtn.onclick = function () {
+            let settingPanel = document.getElementById("display-setting");
+            if (settingPanel) {
+                settingPanel.classList.toggle("float-panel-closed");
+            }
+        };
+    }
+
+    let menuBtn = document.getElementById("nav-menu-switch");
+    if (menuBtn) {
+        menuBtn.onclick = function () {
+            let menuPanel = document.getElementById("nav-menu-panel");
+            if (menuPanel) {
+                menuPanel.classList.toggle("float-panel-closed");
+                menuBtn?.setAttribute("aria-expanded", String(!menuPanel.classList.contains("float-panel-closed")));
+            }
+        };
+    }
+}
+
+loadButtonScript();
+const homePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname.replace(/\/$/, '') || '/';
+function updateSelection() {
+    const nav = document.querySelector<HTMLElement>('.navbar-links');
+    const selected = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+    const pill = nav?.querySelector<HTMLElement>('.nav-selection');
+    if (!nav || !pill) return;
+    nav.dataset.selectionReady = String(!!selected && nav.offsetWidth > 0);
+    if (!selected || !nav.offsetWidth) return;
+    pill.style.width = selected.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + selected.offsetLeft + 'px)';
+}
+function updateNavigation() {
+    const path = window.location.pathname.replace(/\/$/, '') || '/';
+    document.querySelectorAll<HTMLAnchorElement>('[data-site-nav]').forEach((link) => {
+        const target = new URL(link.href).pathname.replace(/\/$/, '') || '/';
+        const active = target === homePath
+            ? path === homePath || /^\d+$/.test(path.slice(homePath === '/' ? 1 : homePath.length + 1))
+            : path === target || path.startsWith(target + '/');
+        if (active) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+    });
+    document.getElementById('nav-menu-panel')?.classList.add('float-panel-closed');
+    document.getElementById('nav-menu-switch')?.setAttribute('aria-expanded', 'false');
+    updateSelection();
+}
+updateNavigation();
+const nav = document.querySelector('.navbar-links');
+if (nav) new ResizeObserver(updateSelection).observe(nav);
+document.fonts.ready.then(updateSelection);
+function registerNavigation() {
+    window.swup.hooks.on('page:view', updateNavigation);
+    const scrollPlugin = window.swup.findPlugin('SwupScrollPlugin');
+    if (scrollPlugin && 'options' in scrollPlugin) {
+        const options = scrollPlugin.options as { offset: () => number };
+        options.offset = () => Math.ceil(document.getElementById('navbar-wrapper')?.getBoundingClientRect().bottom ?? 84) + 16;
+    }
+}
+if (window.swup) registerNavigation();
+else document.addEventListener('swup:enable', registerNavigation, { once: true });
+</script>
+
+<style>
+    .navbar-capsule {
+        --acrylic-fill: rgba(248, 250, 255, .82);
+        --acrylic-rim: rgba(255, 255, 255, .8);
+        --acrylic-sheen: rgba(255, 255, 255, .4);
+        --acrylic-shadow: rgba(24, 37, 62, .13);
+        --nav-track: rgba(31, 45, 68, .045);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 68px;
+        padding: 9px 12px;
+        border: 1px solid var(--acrylic-rim);
+        border-radius: 999px;
+        background: var(--acrylic-fill);
+        box-shadow: 0 12px 36px -12px var(--acrylic-shadow),
+                    0 2px 6px rgba(24, 37, 62, .04),
+                    inset 0 1px 0 var(--acrylic-sheen);
+        -webkit-backdrop-filter: blur(24px) saturate(145%);
+        backdrop-filter: blur(24px) saturate(145%);
+    }
+    :global(.dark) .navbar-capsule {
+        --acrylic-fill: rgba(28, 31, 39, .86);
+        --acrylic-rim: rgba(255, 255, 255, .13);
+        --acrylic-sheen: rgba(255, 255, 255, .09);
+        --acrylic-shadow: rgba(0, 0, 0, .35);
+        --nav-track: rgba(255, 255, 255, .055);
+    }
+    .navbar-brand {
+        flex-shrink: 0;
+        height: 44px;
+        padding: 0 14px;
+        border-radius: 999px;
+    }
+    .navbar-links {
+        position: relative;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 2px;
+        padding: 3px;
+        border-radius: 999px;
+        background: var(--nav-track);
+    }
+    .nav-link {
+        z-index: 1;
+        height: 44px;
+        padding: 0 14px;
+        border-radius: 999px;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+    .nav-selection {
+        position: absolute;
+        left: 0;
+        top: 3px;
+        height: 44px;
+        border-radius: 999px;
+        background: var(--btn-regular-bg);
+        box-shadow: inset 0 1px 0 var(--acrylic-sheen), 0 2px 6px rgba(24, 37, 62, .06);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 320ms cubic-bezier(.22, 1, .36, 1), width 320ms cubic-bezier(.22, 1, .36, 1), opacity 150ms;
+    }
+    .navbar-links[data-selection-ready="true"] .nav-selection { opacity: 1; }
+    .nav-link[aria-current="page"] { color: var(--primary); background: var(--btn-regular-bg); }
+    .navbar-links[data-selection-ready="true"] .nav-link[aria-current="page"] { background: transparent; }
+    .navbar-actions { align-items: center; flex-shrink: 0; gap: 2px; }
+    .navbar-capsule :global(#scheme-switch),
+    .navbar-capsule :global(#search-switch) { border-radius: 50%; }
+    .navbar-capsule :global(.float-panel) {
+        background: var(--acrylic-fill);
+        border: 1px solid var(--acrylic-rim);
+        box-shadow: 0 12px 36px -12px var(--acrylic-shadow);
+        -webkit-backdrop-filter: blur(24px) saturate(145%);
+        backdrop-filter: blur(24px) saturate(145%);
+    }
+    .navbar-capsule :global(#search-panel),
+    .navbar-capsule :global(#nav-menu-panel),
+    .navbar-capsule :global(#display-setting) {
+        position: absolute;
+        top: calc(100% + 12px);
+        right: 12px;
+        max-width: calc(100vw - 48px);
+        max-height: calc(100dvh - 112px);
+        overflow-y: auto;
+    }
+    .navbar-capsule :global(#nav-menu-panel [aria-current="page"]) { background: var(--btn-regular-bg); }
+    .navbar-capsule :global(#nav-menu-panel [aria-current="page"] > div) { color: var(--primary); }
+    .navbar-capsule :global(a:focus-visible),
+    .navbar-capsule :global(button:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
+    @media (min-width: 1024px) and (max-width: 1199px) {
+        .navbar-capsule { gap: 6px; padding-inline: 10px; }
+        .navbar-brand { padding-inline: 10px; }
+        .nav-link { padding-inline: 10px; }
+    }
+    @media (max-width: 1023px) {
+        .navbar-capsule { min-height: 62px; padding: 7px 9px; }
+        .navbar-brand { padding-inline: 10px; }
+    }
+    @media (max-width: 359px) {
+        .navbar-capsule { gap: 4px; padding-inline: 6px; }
+        .navbar-brand { padding-inline: 6px; }
+        .navbar-brand :global(.brand-icon) { display: none; }
+        .navbar-actions { gap: 0; }
+    }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .navbar-capsule, .navbar-capsule :global(.float-panel) { background: var(--card-bg); }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+        .navbar-capsule, .navbar-capsule :global(.float-panel) { background: var(--card-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        :global(#navbar) { animation: none; opacity: 1; }
+        .nav-selection { transition: none; }
+        .navbar-capsule :global(.scale-animation:active) { transform: none; }
+    }
+</style>
+
+{import.meta.env.PROD && <script is:inline define:vars={{scriptUrl: url('/pagefind/pagefind.js')}}>
+async function loadPagefind() {
+    try {
+        const response = await fetch(scriptUrl, { method: 'HEAD' });
+        if (!response.ok) {
+            throw new Error(`Pagefind script not found: ${response.status}`);
+        }
+
+        const pagefind = await import(scriptUrl);
+
+        await pagefind.options({
+            excerptLength: 20
+        });
+
+        window.pagefind = pagefind;
+
+        document.dispatchEvent(new CustomEvent('pagefindready'));
+        console.log('Pagefind loaded and initialized successfully, event dispatched.');
+    } catch (error) {
+        console.error('Failed to load Pagefind:', error);
+        document.dispatchEvent(new CustomEvent('pagefindloaderror'));
+        console.log('Pagefind load error, event dispatched.');
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadPagefind);
+} else {
+    loadPagefind();
+}
+</script>}

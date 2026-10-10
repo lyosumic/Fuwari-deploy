@@ -1,0 +1,27 @@
+---
+import { Icon } from "astro-icon/components";
+import { url } from "../../utils/url-utils";
+
+interface Props {
+	icon: string;
+}
+const { icon } = Astro.props;
+const isImage = icon.startsWith("/") || /^https?:\/\//.test(icon);
+const iconUrl = icon.startsWith("/") ? url(icon) : icon;
+---
+{isImage ? (
+    <span aria-hidden="true" class="profile-link-icon" style={{ "--profile-icon": `url(${JSON.stringify(iconUrl)})` }} />
+) : (
+    <Icon name={icon} class="w-6 h-6 shrink-0" />
+)}
+<style>
+    .profile-link-icon {
+        display: block;
+        width: 1.5rem;
+        height: 1.5rem;
+        flex-shrink: 0;
+        background-color: currentColor;
+        -webkit-mask: var(--profile-icon) center / contain no-repeat;
+        mask: var(--profile-icon) center / contain no-repeat;
+    }
+</style>

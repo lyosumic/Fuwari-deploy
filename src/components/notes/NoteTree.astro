@@ -1,0 +1,54 @@
+---
+import { Icon } from "astro-icon/components";
+import {
+	categoryContains,
+	getNoteUrl,
+	type NoteCategory,
+} from "../../utils/notes-utils";
+
+interface Props {
+	categories: NoteCategory[];
+	currentSlug?: string;
+	depth?: number;
+}
+const { categories, currentSlug, depth = 0 } = Astro.props;
+---
+<ul class="note-tree space-y-2" data-pagefind-ignore>
+    {categories.map((category) => (
+        <li>
+            <details open={currentSlug ? categoryContains(category, currentSlug) : depth === 0}>
+                <summary class="flex items-center gap-2 rounded-xl p-3 cursor-pointer text-75 font-bold hover:bg-[var(--btn-plain-bg-hover)]">
+                    <Icon name="material-symbols:chevron-right-rounded" class="note-chevron shrink-0 text-xl text-[var(--primary)]" />
+                    <Icon name="material-symbols:folder-outline-rounded" class="shrink-0 text-xl text-[var(--primary)]" />
+                    <span class="min-w-0 break-words">{category.name}</span>
+                    <span class="ml-auto shrink-0 text-xs text-50 font-normal">{category.count} 篇</span>
+                </summary>
+                <div class="ml-3 md:ml-5 pl-2 md:pl-3 border-l border-[var(--line-color)] mt-2">
+                    <Astro.self categories={category.children} currentSlug={currentSlug} depth={depth + 1} />
+                    <ul class="space-y-1">
+                        {category.notes.map((note) => (
+                            <li>
+                                <a href={getNoteUrl(note.slug)} aria-current={note.slug === currentSlug ? "page" : undefined}
+                                   class:list={["note-link block rounded-xl px-3 py-3 hover:bg-[var(--btn-plain-bg-hover)]", note.slug === currentSlug ? "text-[var(--primary)] bg-[var(--btn-regular-bg)]" : "text-75"]}>
+                                    <span class="flex items-start gap-2">
+                                        <Icon name={note.data.pdf ? "material-symbols:picture-as-pdf-outline-rounded" : "material-symbols:description-outline-rounded"} class="shrink-0 text-xl text-[var(--primary)]" />
+                                        <span class="min-w-0 break-words font-medium">{note.data.title}</span>
+                                        {note.data.pdf && <span class="text-xs text-[var(--primary)] bg-[var(--btn-regular-bg)] px-2 py-0.5 rounded-md shrink-0">PDF</span>}
+                                    </span>
+                                    {note.data.description && <p class="ml-7 mt-1 text-sm text-50 break-words">{note.data.description}</p>}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </details>
+        </li>
+    ))}
+</ul>
+<style>
+    summary { list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    details[open] > summary .note-chevron { transform: rotate(90deg); }
+    .note-chevron { transition: transform 150ms; }
+    summary:focus-visible, .note-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+</style>

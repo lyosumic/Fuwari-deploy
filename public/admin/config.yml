@@ -1,0 +1,172 @@
+backend:
+  name: github
+  repo: lyosumic/My-Blog
+  branch: main
+  # init.js 在初始化时将 base_url 设为当前网站 origin；/auth 由 Cloudflare Worker 处理。
+  base_url: https://localhost.invalid
+  auth_endpoint: auth
+  auth_scope: repo
+
+locale: zh_Hans
+logo: { src: /admin/logo.svg, show_in_header: true }
+display_url: /
+media_folder: public/uploads
+public_folder: /uploads
+publish_mode: simple
+slug:
+  encoding: unicode
+  clean_accents: true
+  sanitize_replacement: '-'
+
+collections:
+  - name: posts
+    label: 博客文章
+    label_singular: 文章
+    folder: src/content/posts
+    create: true
+    delete: true
+    format: yaml-frontmatter
+    extension: md
+    slug: '{{year}}-{{month}}-{{day}}-{{slug}}'
+    media_folder: /public/uploads
+    public_folder: /uploads
+    nested: { depth: 100, subfolders: false }
+    summary: '{{title}} · {{published}}'
+    sortable_fields: [published, title]
+    view_filters:
+      - { label: 草稿, field: draft, pattern: true }
+      - { label: 已发布, field: draft, pattern: false }
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - { label: 发布日期, name: published, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD }
+      - { label: 更新日期, name: updated, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD, required: false }
+      - { label: 隐藏为草稿, name: draft, widget: boolean, default: false, hint: '默认公开。打开此开关会隐藏文章；保存后需等待网站成功部署。' }
+      - { label: 摘要, name: description, widget: text, required: false, default: '' }
+      - { label: 封面图片, name: image, widget: image, required: false, default: '' }
+      - { label: 标签（可多选）, name: tags, widget: taxonomy, kind: tags, required: false, default: [], hint: '选择历史标签或输入新标签，可添加多个。标签库可在个人简介与设置中管理。' }
+      - { label: 分类（可多选）, name: category, widget: taxonomy, kind: categories, required: false, default: [], hint: '一篇文章可归属多个分类；已有文章的单分类会自动兼容。' }
+      - { label: 语言, name: lang, widget: string, required: false, default: '' }
+      - { label: 正文, name: body, widget: import-markdown }
+
+  - name: notes
+    label: PDF 学习笔记
+    label_singular: 笔记
+    folder: src/content/notes
+    create: true
+    delete: true
+    format: yaml-frontmatter
+    extension: md
+    slug: 'note-{{slug}}'
+    media_folder: /public/uploads
+    public_folder: /uploads
+    nested: { depth: 100, subfolders: false }
+    summary: '{{title}}'
+    description: '上传 PDF，填写标题与分类，然后保存发布。无需编写正文。'
+    editor: { preview: false }
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - label: PDF 笔记
+        name: pdf
+        widget: file
+        required: true
+        media_folder: /public/uploads/notes
+        public_folder: /uploads/notes
+        media_library: { config: { max_file_size: 20971520 } }
+        pattern: ['^.+[.][pP][dD][fF](?:[?#].*)?$', '请选择 PDF 文件或填写 PDF 链接']
+        hint: '仅接收 PDF，建议不超过 20MB。保存后，笔记页面会提供预览、阅读与下载。'
+      - { label: 摘要, name: description, widget: text, required: false, default: '' }
+      - label: 分类路径
+        name: category
+        widget: list
+        min: 1
+        default: [未分类]
+        hint: '依次填写学期、课程、章节，例如：大一上学期、高等数学、第一章。可拖动调整层级顺序。'
+        field: { label: 分类名称, name: name, widget: string }
+      - { label: 排序, name: order, widget: number, value_type: int, default: 0 }
+      - { label: 更新日期, name: updated, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD, required: false }
+      - { label: 隐藏为草稿, name: draft, widget: boolean, default: false, hint: '默认公开；打开开关后不会出现在网站上。' }
+
+  - name: projects
+    label: 项目代码
+    label_singular: 项目
+    folder: src/content/projects
+    create: true
+    delete: true
+    format: yaml-frontmatter
+    extension: md
+    slug: 'project-{{slug}}'
+    media_folder: /public/uploads/projects
+    public_folder: /uploads/projects
+    summary: '{{title}} · {{status}}'
+    sortable_fields: [order, published, title]
+    fields:
+      - { label: 项目名称, name: title, widget: string }
+      - { label: 简介, name: description, widget: text, required: false, default: '' }
+      - { label: 封面, name: image, widget: image, required: false, default: '' }
+      - { label: 创建日期, name: published, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD }
+      - { label: 更新日期, name: updated, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD, required: false }
+      - { label: 隐藏为草稿, name: draft, widget: boolean, default: false, hint: '默认公开；源码附件也会公开，请只上传准备分享的代码。' }
+      - { label: 技术栈, name: technologies, widget: list, required: false, default: [] }
+      - label: 项目状态
+        name: status
+        widget: select
+        default: active
+        options: [{ label: 进行中, value: active }, { label: 已完成, value: completed }, { label: 已归档, value: archived }]
+      - { label: 仓库地址, name: repository, widget: string, required: false, default: '', pattern: ['^https?://.+', '请填写 http 或 https 链接'] }
+      - { label: 在线演示, name: demo, widget: string, required: false, default: '', pattern: ['^https?://.+', '请填写 http 或 https 链接'] }
+      - label: 源码压缩包
+        name: source
+        widget: file
+        required: false
+        default: ''
+        media_library: { config: { max_file_size: 20971520 } }
+        pattern: ['^(?:/uploads/|https?://).+\.(?:zip|tar|gz|tgz|7z)(?:[?#].*)?$', '请选择 zip、tar、gz、tgz 或 7z 源码压缩包']
+        hint: '代码保存在 Git 仓库的 public/uploads/projects 中；访客可以下载。建议 20MB 以内，大项目可直接填写仓库地址。'
+      - { label: 排序（越小越靠前）, name: order, widget: number, value_type: int, default: 0 }
+      - { label: README / 代码片段, name: body, widget: import-markdown, required: false, hint: '可导入 README.md，也可用 Markdown 代码块展示代码。' }
+
+  - name: settings
+    label: 个人简介与设置
+    delete: false
+    editor: { preview: false }
+    files:
+      - name: profile
+        label: 个人简介与头像
+        file: src/data/profile.json
+        fields:
+          - { label: 昵称, name: name, widget: string }
+          - { label: 简介, name: bio, widget: text, required: false }
+          - { label: 头像, name: avatar, widget: image, required: false }
+          - label: 个人链接
+            name: links
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 名称, name: name, widget: string }
+              - { label: 链接, name: url, widget: string, pattern: ['^https?://.+', '请填写 http 或 https 链接'] }
+              - { label: 图标, name: icon, widget: string, default: 'fa6-solid:link', hint: '例如 /icons/bilibili.svg、/icons/deepseek.svg、/icons/school.svg，或 Iconify 名称。' }
+      - name: tags
+        label: 标签批量显示设置
+        file: src/data/tags.json
+        fields:
+          - label: 标签映射
+            name: aliases
+            widget: list
+            required: false
+            default: []
+            hint: '原标签改为新标签；新标签留空会隐藏。规则只作用于网站显示和筛选，保留文章源文件中的标签。'
+            fields:
+              - { label: 原标签, name: from, widget: string }
+              - { label: 新标签, name: to, widget: string, required: false, default: '' }
+      - name: taxonomy
+        label: 历史标签与分类库
+        file: src/data/taxonomy.json
+        fields:
+          - { label: 常用标签, name: tags, widget: taxonomy, kind: tags, required: false, default: [], hint: '保存在仓库中，换浏览器也可选择。可以保留已删除文章使用过的名称。' }
+          - { label: 常用分类, name: categories, widget: taxonomy, kind: categories, required: false, default: [] }
+      - name: about
+        label: 关于页面
+        file: src/content/spec/about.md
+        fields:
+          - { label: 正文, name: body, widget: import-markdown }

@@ -1,0 +1,43 @@
+---
+import { Icon } from "astro-icon/components";
+import CollectionHeader from "../../components/CollectionHeader.astro";
+import ImageWrapper from "../../components/misc/ImageWrapper.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import {
+	getProjects,
+	getProjectUrl,
+	projectStatuses,
+} from "../../utils/projects-utils";
+import { getDir } from "../../utils/url-utils";
+
+const projects = await getProjects();
+---
+<MainGridLayout title="项目" description="记录做过的项目，分享实现思路与源代码">
+    <CollectionHeader title="项目" eyebrow="BUILD & SHARE" description="把想法变成作品。这里收藏我的实践、代码与一点点探索。" icon="material-symbols:code-rounded" count={projects.length} unit="个项目">
+        <span class="text-50">源代码 · README · 实践记录</span>
+    </CollectionHeader>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {projects.map((project) => (
+            <article class="card-base project-card flex flex-col">
+                {project.data.image && <a href={getProjectUrl(project.slug)} tabindex="-1" aria-hidden="true"><ImageWrapper src={project.data.image} basePath={`content/projects/${getDir(project.id)}`} alt={project.data.title} class="h-44 w-full object-cover" /></a>}
+                <div class="p-6 flex flex-col flex-1">
+                    <div class="flex items-center justify-between gap-2 mb-4 text-xs">
+                        <span class="text-[var(--primary)] bg-[var(--btn-regular-bg)] rounded-full px-3 py-1">{projectStatuses[project.data.status]}</span>
+                        <time class="text-50" datetime={project.data.published.toISOString()}>{project.data.published.toISOString().slice(0, 10)}</time>
+                    </div>
+                    <h2 class="text-90 text-xl font-bold mb-3 break-words"><a class="link" href={getProjectUrl(project.slug)}>{project.data.title}</a></h2>
+                    <p class="text-50 leading-relaxed text-sm mb-4 flex-1 break-words">{project.data.description || "查看项目的实现与源代码。"}</p>
+                    <div class="flex flex-wrap gap-2 mb-5">{project.data.technologies.map((tech) => <span class="text-75 text-xs bg-[var(--btn-plain-bg-hover)] px-2 py-1 rounded-md">{tech}</span>)}</div>
+                    <a href={getProjectUrl(project.slug)} class="flex items-center justify-between border-t border-[var(--line-color)] pt-4 text-sm font-bold text-[var(--primary)]">
+                        <span>{project.data.source ? "查看项目与下载代码" : "查看项目"}</span><Icon name="material-symbols:arrow-forward-rounded" class="text-xl" />
+                    </a>
+                </div>
+            </article>
+        ))}
+    </div>
+    {!projects.length && <section class="card-base px-6 py-16 text-center mb-4">
+        <Icon name="material-symbols:code-rounded" class="text-5xl mx-auto mb-5 text-[var(--primary)]" />
+        <h2 class="text-75 text-xl font-bold mb-3">新的作品，正在酝酿</h2><p class="text-50">项目发布后，会在这里分享实现思路与源代码。</p>
+    </section>}
+</MainGridLayout>
+<style>.project-card:hover { box-shadow: 0 8px 28px rgb(0 0 0 / .04); }</style>

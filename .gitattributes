@@ -1,0 +1,2 @@
+# Windows batch files must retain CRLF in git archives and release ZIPs.
+deploy.cmd -text

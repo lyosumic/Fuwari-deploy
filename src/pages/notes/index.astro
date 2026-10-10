@@ -1,0 +1,20 @@
+---
+import CollectionHeader from "../../components/CollectionHeader.astro";
+import NoteTree from "../../components/notes/NoteTree.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { buildNoteTree, getNotes } from "../../utils/notes-utils";
+
+const notes = await getNotes();
+const categories = buildNoteTree(notes);
+---
+<MainGridLayout title="笔记" description="按学期、课程与章节整理的个人学习笔记">
+    <CollectionHeader title="学习笔记" eyebrow="LEARN & COLLECT" description="把学过的知识，慢慢整理成自己的笔记。按课程收纳，随时翻阅。" icon="material-symbols:menu-book-outline-rounded" count={notes.length} unit="篇笔记">
+        <span class="text-50">{categories.length} 个分类 · PDF / Markdown</span>
+    </CollectionHeader>
+    <section class="card-base p-5 md:p-9 mb-4">
+        <div>
+            <h2 class="text-75 font-bold mb-3">学习目录</h2>
+            {notes.length ? <NoteTree categories={categories} /> : <p class="text-50 py-8 text-center">还没有公开的笔记，敬请期待。</p>}
+        </div>
+    </section>
+</MainGridLayout>

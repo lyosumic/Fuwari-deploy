@@ -1,0 +1,33 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	title: string;
+	description: string;
+	eyebrow: string;
+	icon: string;
+	count?: number;
+	unit?: string;
+}
+const { title, description, eyebrow, icon, count, unit = "篇" } = Astro.props;
+---
+<header class="collection-header card-base p-6 md:p-9 mb-4 relative">
+    <div class="relative z-10">
+        <p class="text-[var(--primary)] text-xs font-bold tracking-[0.2em] mb-4">{eyebrow}</p>
+        <div class="flex items-center gap-3 mb-3">
+            <span class="collection-icon"><Icon name={icon} class="text-2xl" /></span>
+            <h1 class="text-90 text-3xl md:text-4xl font-bold tracking-tight">{title}</h1>
+        </div>
+        <p class="text-50 leading-relaxed max-w-xl">{description}</p>
+        <div class="flex flex-wrap items-center gap-3 mt-5 text-sm">
+            {count !== undefined && <span class="collection-pill">{count} {unit}</span>}
+            <slot />
+        </div>
+    </div>
+</header>
+<style>
+    .collection-header { background-image: radial-gradient(ellipse at top right, var(--btn-regular-bg), transparent 65%); }
+    .collection-header::after { content: ''; position: absolute; width: 12rem; height: 12rem; border: 1px solid var(--line-color); border-radius: 50%; right: -4rem; top: -5rem; pointer-events: none; }
+    .collection-icon { color: var(--primary); background: var(--btn-regular-bg); border-radius: 1rem; padding: .75rem; }
+    .collection-pill { background: var(--btn-regular-bg); color: var(--primary); border-radius: 999px; padding: .4rem .85rem; font-weight: 600; }
+</style>

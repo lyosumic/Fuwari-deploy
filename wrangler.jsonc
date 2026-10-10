@@ -1,0 +1,16 @@
+{
+  "name": "my-blog",
+  "main": "server/worker.js",
+  "compatibility_date": "2026-10-07",
+  "keep_vars": true,
+  "vars": {
+    "ADMIN_ORIGIN": "https://060926.xyz",
+    "GITHUB_CLIENT_ID": "Ov23liiomKHFUJdyyO7y",
+    "GITHUB_OAUTH_SCOPE": "repo"
+  },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/auth", "/auth/*"]
+  }
+}

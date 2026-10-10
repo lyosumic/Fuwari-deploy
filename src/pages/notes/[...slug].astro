@@ -1,0 +1,54 @@
+---
+import { render } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import Markdown from "../../components/misc/Markdown.astro";
+import NoteTree from "../../components/notes/NoteTree.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { attachmentUrl } from "../../utils/file-utils";
+import { buildNoteTree, getNotes, type Note } from "../../utils/notes-utils";
+import { url } from "../../utils/url-utils";
+
+export const getStaticPaths = (async () => {
+	const notes = await getNotes();
+	return notes.map((note) => ({
+		params: { slug: note.slug },
+		props: { note },
+	}));
+}) satisfies GetStaticPaths;
+
+interface Props {
+	note: Note;
+}
+const { note } = Astro.props;
+const { Content, headings } = await render(note);
+const categories = buildNoteTree(await getNotes());
+---
+<MainGridLayout title={note.data.title} description={note.data.description} headings={headings}>
+    <article class="card-base p-5 md:p-9 mb-4" data-pagefind-body>
+        <nav aria-label="笔记路径" class="flex flex-wrap items-center gap-2 text-sm text-50 mb-5" data-pagefind-ignore>
+            <a class="link text-[var(--primary)]" href={url("/notes/")}>笔记</a>
+            {note.data.category.map((category) => <><span aria-hidden="true">/</span><span>{category}</span></>)}
+        </nav>
+        <h1 class="text-90 text-3xl font-bold mb-3 break-words" data-pagefind-meta="title">{note.data.title}</h1>
+        {note.data.description && <p class="text-50 mb-3">{note.data.description}</p>}
+        {note.data.updated && <p class="text-50 text-sm mb-4">更新于 <time datetime={note.data.updated.toISOString()}>{note.data.updated.toISOString().slice(0, 10)}</time></p>}
+        {note.data.pdf && <section class="mt-6" aria-label="PDF 笔记" data-pagefind-ignore>
+            <div class="flex flex-wrap gap-3 mb-4">
+                <a class="btn-regular rounded-xl px-4 py-3 font-bold" href={attachmentUrl(note.data.pdf)} target="_blank" rel="noopener noreferrer" data-swup-ignore>在新窗口阅读 PDF ↗</a>
+                <a class="btn-regular rounded-xl px-4 py-3" href={attachmentUrl(note.data.pdf)} download data-swup-ignore>下载 PDF ↓</a>
+            </div>
+            <iframe src={attachmentUrl(note.data.pdf)} title={`${note.data.title} · PDF 预览`} loading="lazy" class="pdf-viewer w-full rounded-xl border border-[var(--line-color)]" referrerpolicy="no-referrer"></iframe>
+            <p class="text-50 text-sm mt-3">如果浏览器无法预览，请使用上方按钮打开或下载 PDF。</p>
+        </section>}
+        {(note.body || "").trim() && <div class="border-t border-[var(--line-color)] mt-6 pt-5">
+            <Markdown class="mt-2"><Content /></Markdown>
+        </div>}
+    </article>
+    <section class="card-base p-5 md:p-7 mb-4" data-pagefind-ignore>
+        <details>
+            <summary class="text-75 font-bold cursor-pointer">学习目录 · 继续阅读</summary>
+            <div class="mt-4"><NoteTree categories={categories} currentSlug={note.slug} /></div>
+        </details>
+    </section>
+</MainGridLayout>
+<style>.pdf-viewer { height: min(75vh, 900px); min-height: 420px; background: var(--btn-plain-bg-hover); } @media(max-width: 640px) { .pdf-viewer { min-height: 320px; height: 60vh; } }</style>

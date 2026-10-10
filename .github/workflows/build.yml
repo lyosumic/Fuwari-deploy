@@ -71,3 +71,19 @@ jobs:
 
       - name: Verify content publishing
         run: pnpm test:publishing
+
+  deployment-dry-run:
+    runs-on: windows-latest
+    name: Windows deployment dry run
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+        with:
+          node-version: 22
+      - name: Run complete deployment program without upload
+        run: node tools/deploy.mjs --dry-run --non-interactive
+        env:
+          DEPLOY_WORKER_NAME: fuwari-deploy-smoke
+          SITE_URL: https://fuwari-deploy.example.com/
+          DEPLOY_REPOSITORY: ${{ github.repository }}
+          WRANGLER_SEND_METRICS: false

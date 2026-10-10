@@ -110,7 +110,11 @@ export async function main(args = process.argv.slice(2)) {
   mkdirSync(state, { recursive: true });
   const workerFile = join(state, 'wrangler.json');
   writeFileSync(workerFile, JSON.stringify(makeWorkerConfig(config), null, 2) + '\n');
-  const wrangler = ['exec', '--yes', `--package=wrangler@${WRANGLER}`, '--', 'wrangler'];
+  // npm may silently omit a failed optional Windows download. Requiring the
+  // matching binary explicitly makes failures visible and prevents a broken CLI.
+  const windowsRuntime = process.platform === 'win32' ? ['--package=@cloudflare/workerd-windows-64@1.20261006.1'] : [];
+  const wrangler = ['exec', '--yes', '--include=optional', `--package=wrangler@${WRANGLER}`, ...windowsRuntime, '--', 'wrangler'];
+  console.log('准备 Cloudflare Wrangler；首次运行可能需要下载较大的平台运行时，请等待。');
   if (!args.includes('--dry-run') && !process.env.CLOUDFLARE_API_TOKEN) {
     // Reuse Wrangler's existing login; suppress account details from the probe.
     if (npm([...wrangler, 'whoami', '--json'], {}, true) !== 0) npm([...wrangler, 'login']);

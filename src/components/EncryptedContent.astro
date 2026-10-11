@@ -1,7 +1,13 @@
 ---
 import { encryptProtectedContent } from "../utils/password-protection";
 
-const { password, scope, hint = "" } = Astro.props;
+const {
+	password,
+	scope,
+	hint = "",
+	title = "这是一篇加密文章",
+	description = "输入密码，解锁这段私藏的故事。",
+} = Astro.props;
 const html = await Astro.slots.render("default");
 const payload = await encryptProtectedContent(
 	html,
@@ -11,7 +17,7 @@ const payload = await encryptProtectedContent(
 );
 ---
 <section class="encrypted-content" data-pagefind-ignore data-payload={JSON.stringify(payload)} data-scope={scope}>
-  <form class="unlock-form"><h2>这是一篇加密文章</h2><p>输入密码，解锁这段私藏的故事。</p>{hint && <p class="password-hint">提示：{hint}</p>}<label>文章密码<input type="password" autocomplete="off" required /></label><button type="submit">解锁文章</button><p class="unlock-status" aria-live="polite"></p></form>
+  <form class="unlock-form"><h2>{title}</h2><p>{description}</p>{hint && <p class="password-hint">提示：{hint}</p>}<label>阅读密码<input type="password" autocomplete="off" required /></label><button type="submit">解锁内容</button><p class="unlock-status" aria-live="polite"></p></form>
   <div class="unlocked-body" hidden></div>
 </section>
 <script>

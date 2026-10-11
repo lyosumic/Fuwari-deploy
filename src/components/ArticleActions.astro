@@ -2,7 +2,7 @@
 import { profileConfig, siteConfig } from "../config";
 import { uiConfig } from "../ui-config";
 import { getSortedPosts } from "../utils/content-utils";
-import { getPostUrlBySlug } from "../utils/url-utils";
+import { getPostUrl } from "../utils/url-utils";
 
 const { entry } = Astro.props;
 const posts = uiConfig.article.related ? await getSortedPosts() : [];
@@ -35,14 +35,14 @@ const old =
   <p data-share-status aria-live="polite"></p>
   <dialog class="poster-dialog"><button type="button" data-poster-close aria-label="关闭海报">×</button><canvas width="800" height="1100"></canvas><a download="article-poster.png">下载海报</a></dialog>
 </section>}
-{(related.length > 0 || recommendations.length > 0) && <section class="card-base article-discovery"><h2 class="m3-widget-title">延伸阅读</h2><div>{[...related, ...recommendations].map(post => <a href={getPostUrlBySlug(post.slug)}><span>{post.data.title}</span><small>{post.data.published.toISOString().slice(0, 10)}</small></a>)}</div></section>}
+{(related.length > 0 || recommendations.length > 0) && <section class="card-base article-discovery"><h2 class="m3-widget-title">延伸阅读</h2><div>{[...related, ...recommendations].map(post => <a href={getPostUrl(post)}><span>{post.data.title}</span><small>{post.data.published.toISOString().slice(0, 10)}</small></a>)}</div></section>}
 <script>
 function setupSharing() {
   const sharing = document.querySelector<HTMLElement>(".article-share");
   if (!sharing || sharing.dataset.initialized) return;
   sharing.dataset.initialized = "true";
   const status = sharing.querySelector<HTMLElement>("[data-share-status]");
-  const canonical = location.origin + location.pathname;
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href || location.origin + location.pathname;
   async function copyLink() {
     try { await navigator.clipboard.writeText(canonical); if (status) status.textContent = "链接已复制。"; }
     catch { if (status) status.textContent = `请复制：${canonical}`; }

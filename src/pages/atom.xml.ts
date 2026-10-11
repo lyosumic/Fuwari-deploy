@@ -1,7 +1,7 @@
 import type { APIContext } from "astro";
 import { siteConfig } from "../config";
 import { getSortedPosts } from "../utils/content-utils";
-import { getPostUrlBySlug } from "../utils/url-utils";
+import { getPostUrl } from "../utils/url-utils";
 
 const escapeXml = (value: string) =>
 	value.replace(
@@ -22,7 +22,7 @@ export async function GET(context: APIContext) {
 		posts[0]?.data.updated || posts[0]?.data.published || new Date();
 	const entries = posts
 		.map((post) => {
-			const href = new URL(getPostUrlBySlug(post.slug), site).href;
+			const href = new URL(getPostUrl(post), site).href;
 			return `<entry><title>${escapeXml(post.data.title)}</title><id>${escapeXml(href)}</id><link href="${escapeXml(href)}"/><published>${post.data.published.toISOString()}</published><updated>${(post.data.updated || post.data.published).toISOString()}</updated><summary>${escapeXml(post.data.description)}</summary></entry>`;
 		})
 		.join("");

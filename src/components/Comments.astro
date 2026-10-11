@@ -2,16 +2,43 @@
 import { uiConfig } from "../ui-config";
 
 const config = uiConfig.comments;
+const configured =
+	config.provider === "twikoo"
+		? Boolean(config.twikooEnvId)
+		: config.provider === "giscus" &&
+			Boolean(config.repo && config.repoId && config.categoryId);
 ---
-{config.enable && config.repo && config.repoId && config.categoryId && <section class="card-base comments-box" data-comments={JSON.stringify(config)}><h2 class="m3-widget-title">评论</h2><button type="button" data-load-comments>加载 GitHub 评论</button><div class="giscus"></div></section>}
+{config.enable && configured && <section id="comments" class="card-base comments-box" data-comments={JSON.stringify(config)}><h2 class="m3-widget-title">评论</h2><button type="button" data-load-comments>加载评论</button><div class="giscus"></div><div class="twikoo"></div><p data-comment-status aria-live="polite"></p></section>}
 <script>
 function setupComments() {
   document.querySelectorAll<HTMLElement>(".comments-box").forEach(container => {
     const button = container.querySelector<HTMLButtonElement>("[data-load-comments]");
     if (!button || button.dataset.ready) return;
     button.dataset.ready = "true";
-    button.onclick = () => {
+    button.onclick = async () => {
       const config = JSON.parse(container.dataset.comments || "{}");
+      if (config.provider === "twikoo") {
+        button.disabled = true;
+        const status = container.querySelector<HTMLElement>("[data-comment-status]");
+        try {
+          const source = new URL(config.twikooScriptUrl);
+          if (source.protocol !== "https:" || source.username || source.password) throw new Error("Invalid comments script");
+          const target = container.querySelector<HTMLElement>(".twikoo");
+          if (!target) return;
+          target.id = `comments-${Math.random().toString(36).slice(2)}`;
+          const api = window as typeof window & { twikoo?: { init(options: { envId: string; el: string; lang: string; path: string }): Promise<void> } };
+          if (!api.twikoo) await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script"); script.src = source.href; script.async = true;
+            script.onload = () => resolve(); script.onerror = () => { script.remove(); reject(new Error("Comments unavailable")); };
+            document.head.append(script);
+          });
+          if (!api.twikoo) throw new Error("Comments unavailable");
+          await api.twikoo.init({ envId: config.twikooEnvId, el: `#${target.id}`, lang: document.documentElement.lang, path: location.pathname });
+          button.remove();
+        } catch { if (status) status.textContent = "暂时无法加载评论，请稍后重试。"; }
+        finally { button.disabled = false; }
+        return;
+      }
       const script = document.createElement("script");
       script.src = "https://giscus.app/client.js"; script.async = true; script.crossOrigin = "anonymous";
       const data = { repo: config.repo, "repo-id": config.repoId, category: config.category, "category-id": config.categoryId, mapping: "pathname", strict: "1", "reactions-enabled": "1", "emit-metadata": "0", "input-position": "top", theme: document.documentElement.classList.contains("dark") ? "dark" : "light", lang: "zh-CN", loading: "lazy" };

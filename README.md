@@ -113,3 +113,7 @@ npx --yes --package=pnpm@9.14.4 pnpm test:publishing
 ## 许可
 
 主题和部署代码沿用 [MIT License](LICENSE)。文章、笔记、项目附件和图片保留原作者及资源授权，代码 MIT 许可不自动授予个人内容使用权。站点当前文章许可配置为 CC BY-NC-SA 4.0，具体以作者声明为准。
+
+### 扩展功能配置
+
+现已支持 Giscus/Twikoo、本地/自定义/Meting/混合音乐、加密相册、目录相册、文章系列、别名/固定链接，以及手机快捷目录和桌面右键菜单。使用方法与密码保护边界见 [扩展功能配置](docs/shirone-features.zh-CN.md)。原后台、PDF 笔记、项目附件与字体继续保留。

@@ -2,13 +2,13 @@
 import type { CollectionEntry } from "astro:content";
 import path from "node:path";
 import { isEncryptedPost } from "../utils/post-encryption";
-import { getDir, getPostUrlBySlug, getTagUrl } from "../utils/url-utils";
+import { getDir, getPostUrl, getTagUrl } from "../utils/url-utils";
 import ImageWrapper from "./misc/ImageWrapper.astro";
 import PostMeta from "./PostMeta.astro";
 
 const { entry } = Astro.props as { entry: CollectionEntry<"posts"> };
 const { remarkPluginFrontmatter } = await entry.render();
-const href = getPostUrlBySlug(entry.slug);
+const href = getPostUrl(entry);
 const encrypted = isEncryptedPost(entry.data);
 ---
 <article class="card-base post-card">

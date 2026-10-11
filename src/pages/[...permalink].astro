@@ -1,0 +1,18 @@
+---
+import PostArticle from "../components/PostArticle.astro";
+import { getSortedPosts } from "../utils/content-utils";
+export async function getStaticPaths() {
+	const posts = await getSortedPosts();
+	return posts
+		.filter(
+			(entry) =>
+				entry.data.routeUrl && !entry.data.routeUrl.startsWith("/posts/"),
+		)
+		.map((entry) => ({
+			params: { permalink: entry.data.routeUrl?.slice(1, -1) },
+			props: { entry },
+		}));
+}
+const { entry } = Astro.props;
+---
+<PostArticle entry={entry} />

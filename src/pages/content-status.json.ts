@@ -2,10 +2,11 @@ import { getCollection } from "astro:content";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import type { APIRoute } from "astro";
+import { getSortedPosts } from "../utils/content-utils";
 import { getDeploymentConfig } from "../utils/deployment-utils";
 import { getNoteUrl } from "../utils/notes-utils";
 import { getProjectUrl } from "../utils/projects-utils";
-import { getPostUrlBySlug } from "../utils/url-utils";
+import { getPostUrl } from "../utils/url-utils";
 
 export const GET: APIRoute = async () => {
 	const deployment = getDeploymentConfig(process.env);
@@ -26,9 +27,9 @@ export const GET: APIRoute = async () => {
 			);
 		}
 	}
+	const postRoutes = await getSortedPosts();
 	const groups = { posts, notes, projects };
 	const links = {
-		posts: getPostUrlBySlug,
 		notes: getNoteUrl,
 		projects: getProjectUrl,
 	};
@@ -39,7 +40,14 @@ export const GET: APIRoute = async () => {
 				.filter((entry) => !entry.data.draft)
 				.map((entry) => ({
 					title: entry.data.title,
-					url: links[name as keyof typeof links](entry.slug),
+					url:
+						name === "posts"
+							? getPostUrl(
+									postRoutes.find((post) => post.slug === entry.slug) || {
+										slug: entry.slug,
+									},
+								)
+							: links[name as "notes" | "projects"](entry.slug),
 				})),
 		]),
 	);

@@ -7,7 +7,18 @@ export interface ExtraEntry {
 	category?: string;
 	url?: string;
 	image?: string;
-	images?: { src: string; alt?: string }[];
+	images?: import("../types/album").AlbumPhoto[];
+	hidden?: boolean;
+	draft?: boolean;
+	pinned?: boolean;
+	mood?: string;
+	encrypted?: boolean;
+	password?: string;
+	passwordHint?: string;
+	layout?: "grid" | "masonry";
+	columns?: number;
+	location?: string;
+	tags?: string[];
 	content?: string;
 	level?: number;
 	status?: string;
@@ -53,9 +64,20 @@ export const extraModules = {
 };
 export type ExtraModule = keyof typeof extraModules;
 export function getExtraEntries(module: ExtraModule): ExtraEntry[] {
-	return (stored[module] as ExtraEntry[]).filter(
-		(entry) => typeof entry.title === "string" && entry.title.trim(),
+	const entries = (stored[module] as ExtraEntry[]).filter(
+		(entry) =>
+			!entry.draft &&
+			(module === "albums" || !entry.hidden) &&
+			typeof entry.title === "string" &&
+			entry.title.trim(),
 	);
+	return module === "moments" || module === "timeline"
+		? entries.sort(
+				(a, b) =>
+					Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) ||
+					(b.date || "").localeCompare(a.date || ""),
+			)
+		: entries;
 }
 export function safeExternalUrl(value?: string): string | undefined {
 	if (!value) return undefined;

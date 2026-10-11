@@ -15,6 +15,14 @@ function joinUrl(...parts: string[]): string {
 export function getPostUrlBySlug(slug: string): string {
 	return url(`/posts/${slug}/`);
 }
+export function getPostUrl(post: {
+	slug: string;
+	data?: { routeUrl?: string };
+}): string {
+	return post.data?.routeUrl
+		? url(post.data.routeUrl)
+		: getPostUrlBySlug(post.slug);
+}
 
 export function getTagUrl(tag: string): string {
 	if (!tag) return url("/archive/");

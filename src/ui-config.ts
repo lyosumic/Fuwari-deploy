@@ -10,12 +10,37 @@ export const uiConfig = {
 	heroSubtitles: [] as string[],
 	heroTypewriter: true,
 	bannerInterval: 6000,
+	contextMenu: true,
+	permalink: { enable: false, format: "%year%/%monthnum%/%postname%" },
 	announcement: "记录学习与生活，把想法慢慢变成作品。",
 	startDate: "",
 	article: { related: true, share: true, updatedNoticeDays: 90 },
-	music: { enable: true },
+	music: {
+		enable: true,
+		provider: "local",
+		tracks: [] as {
+			id?: string;
+			title: string;
+			artist?: string;
+			source: string;
+			cover?: string;
+		}[],
+		meting: {
+			server: "netease",
+			type: "playlist",
+			id: "",
+			api: "",
+			preload: "none",
+		},
+		defaultVolume: 0.7,
+		defaultMode: "sequence",
+	},
 	comments: {
 		enable: false,
+		provider: "giscus",
+		twikooEnvId: "",
+		twikooScriptUrl:
+			"https://cdn.jsdelivr.net/npm/twikoo@1.7.20/dist/twikoo.min.js",
 		repo: "",
 		repoId: "",
 		category: "",

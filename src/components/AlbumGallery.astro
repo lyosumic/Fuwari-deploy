@@ -1,0 +1,21 @@
+---
+import type { AlbumPhoto } from "../types/album";
+
+const {
+	photos,
+	layout = "grid",
+	columns = 3,
+} = Astro.props as { photos: AlbumPhoto[]; layout?: string; columns?: number };
+---
+<section class="album-gallery" data-photos={JSON.stringify(photos)} aria-label="相册照片">
+  <div class:list={["photo-grid", { "photo-masonry": layout === "masonry" }]} style={`--photo-columns:${columns}`}>
+    {photos.map((photo, index) => <a href={photo.src} class="photo-tile" data-gallery-open={index} data-no-swup><img src={photo.thumbnail || photo.src} alt={photo.alt || photo.title || "相册照片"} width={photo.width} height={photo.height} loading="lazy"/><span>{photo.title || photo.alt}</span></a>)}
+  </div>
+  <dialog class="photo-dialog" aria-label="照片查看器"><div class="photo-toolbar"><button type="button" data-photo-action="previous" aria-label="上一张照片">‹</button><button type="button" data-photo-action="next" aria-label="下一张照片">›</button><button type="button" data-photo-action="zoom" aria-label="缩放照片">＋</button><button type="button" data-photo-action="fullscreen" aria-label="全屏查看">⛶</button><a data-photo-download target="_blank" rel="noopener noreferrer">查看原图 ↗</a><button type="button" data-photo-action="close" aria-label="关闭照片">×</button></div><div class="photo-stage"><img alt=""/></div><p data-photo-caption></p><p data-photo-meta></p><p data-photo-count aria-live="polite"></p></dialog>
+</section>
+<style>
+  .photo-grid { display: grid; grid-template-columns: repeat(var(--photo-columns), minmax(0, 1fr)); gap: .8rem; } .photo-tile { min-width: 0; position: relative; display: block; border-radius: 18px; overflow: hidden; background: var(--mc-surface-container-low); } .photo-tile img { width: 100%; aspect-ratio: 4/3; object-fit: cover; transition: transform .4s; } .photo-tile:hover img { transform: scale(1.04); } .photo-tile span { display: block; padding: .6rem; font-size: .8rem; color: var(--mc-on-surface); }
+  .photo-masonry { display: block; columns: var(--photo-columns); column-gap: .8rem; } .photo-masonry .photo-tile { break-inside: avoid; margin-bottom: .8rem; } .photo-masonry img { aspect-ratio: auto; }
+  .photo-dialog { border: 0; border-radius: 24px; width: min(94vw, 70rem); max-width: 94vw; max-height: 94dvh; padding: 1rem; background: var(--card-bg); color: var(--mc-on-surface); } .photo-dialog::backdrop { background: rgb(0 0 0 / .82); } .photo-toolbar { display: flex; align-items: center; gap: .5rem; margin-bottom: .8rem; } .photo-toolbar button { border-radius: 50%; width: 2.3rem; height: 2.3rem; background: var(--btn-regular-bg); color: var(--primary); font-size: 1.2rem; } .photo-toolbar a { color: var(--primary); font-size: .8rem; margin-left: auto; } .photo-stage { overflow: auto; max-height: 70dvh; } .photo-stage img { max-height: 70dvh; margin: auto; object-fit: contain; } .photo-dialog[data-zoomed='true'] .photo-stage img { max-height: none; max-width: none; width: 150%; } .photo-dialog p { margin-top: .6rem; font-size: .8rem; text-align: center; } [data-photo-meta] { color: var(--mc-on-surface-variant); }
+  @media (max-width: 639px) { .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .photo-masonry { columns: 2; } }
+</style>

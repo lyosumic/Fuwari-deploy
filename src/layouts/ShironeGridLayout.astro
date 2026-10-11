@@ -1,13 +1,15 @@
 ---
 import type { MarkdownHeading } from "astro";
-import BackToTop from "../components/control/BackToTop.astro";
+import FloatingControls from "../components/FloatingControls.astro";
 import Footer from "../components/Footer.astro";
+import GalleryRuntime from "../components/GalleryRuntime.astro";
 import MarkdownEnhancements from "../components/MarkdownEnhancements.astro";
 import ImageWrapper from "../components/misc/ImageWrapper.astro";
 import Navbar from "../components/Navbar.astro";
 import ShironeRuntime from "../components/ShironeRuntime.astro";
+import SiteContextMenu from "../components/SiteContextMenu.astro";
+import MusicPlayer from "../components/widget/AdaptiveMusicPlayer.astro";
 import Announcement from "../components/widget/Announcement.astro";
-import MusicPlayer from "../components/widget/MusicPlayer.astro";
 import SideBar from "../components/widget/SideBar.astro";
 import SidebarDetails from "../components/widget/SidebarDetails.astro";
 import { siteConfig } from "../config";
@@ -34,6 +36,12 @@ const {
 } = Astro.props;
 const hue = siteConfig.themeColor.hue;
 const singleSidebar = uiConfig.sidebars === "single";
+const showMusic =
+	uiConfig.music.enable &&
+	(extras.music.length > 0 ||
+		uiConfig.music.tracks.length > 0 ||
+		(["meting", "mixed"].includes(uiConfig.music.provider) &&
+			uiConfig.music.meting.id.trim()));
 const paletteCss = [false, true]
 	.map(
 		(dark) =>
@@ -56,12 +64,14 @@ const paletteCss = [false, true]
     <svg class="m3-waves" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 45 Q180 0 360 45 T720 45 T1080 45 T1440 45 V100 H0Z" fill="currentColor" opacity=".3" /><path d="M0 62 Q180 15 360 62 T720 62 T1080 62 T1440 62 V100 H0Z" fill="currentColor" opacity=".6" /><path d="M0 78 Q180 25 360 78 T720 78 T1080 78 T1440 78 V100 H0Z" fill="currentColor" /></svg>
   </section>
   <div class="m3-shell"><div class:list={["m3-grid", {"m3-grid-single": singleSidebar}]}>
-    <aside class="m3-primary"><SideBar />{uiConfig.music.enable && extras.music.length > 0 && <MusicPlayer />}<Announcement />{singleSidebar && <SidebarDetails headings={headings} />}</aside>
-    <main id="swup-container" class="transition-swup-fade m3-main"><div id="content-wrapper" class="onload-animation"><slot /></div></main>
+    <aside class="m3-primary"><SideBar />{showMusic && <MusicPlayer />}<Announcement />{singleSidebar && <SidebarDetails headings={headings} />}</aside>
+    <main id="swup-container" class="transition-swup-fade m3-main"><div id="content-wrapper" class="onload-animation"><div id="floating-toc-source" hidden>{siteConfig.toc.enable && headings.filter(heading => heading.depth <= 3).map(heading => <a href={`#${heading.slug}`} style={`padding-left:${Math.max(0, heading.depth - 1) * .7}rem`}>{heading.text}</a>)}</div><slot /></div></main>
     {!singleSidebar && <aside class="m3-secondary"><SidebarDetails headings={headings} /></aside>}
-  </div><Footer /><BackToTop /></div>
+  </div><Footer /><FloatingControls /></div>
   <ShironeRuntime />
   <MarkdownEnhancements />
+  <GalleryRuntime />
+  {uiConfig.contextMenu && <SiteContextMenu />}
 </Layout>
 <style>
   .floating-navbar { position: fixed; z-index: 70; top: max(16px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); max-width: 78rem; margin-inline: auto; }

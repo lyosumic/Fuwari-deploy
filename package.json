@@ -19,7 +19,8 @@
     "preinstall": "npx only-allow pnpm",
     "test:auth": "node scripts/test-auth.mjs",
     "deploy": "node tools/deploy.mjs",
-    "test:deploy": "node tools/test-deploy.mjs"
+    "test:deploy": "node tools/test-deploy.mjs",
+    "test:theme": "node scripts/test-shirone.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

@@ -1,0 +1,21 @@
+---
+import AlbumGallery from "../../../components/AlbumGallery.astro";
+import CollectionHeader from "../../../components/CollectionHeader.astro";
+import EncryptedContent from "../../../components/EncryptedContent.astro";
+import MainGridLayout from "../../../layouts/MainGridLayout.astro";
+import { getAlbums } from "../../../utils/albums";
+import { isEncryptedPost } from "../../../utils/post-encryption";
+import { url } from "../../../utils/url-utils";
+export function getStaticPaths() {
+	return getAlbums().map((album) => ({
+		params: { id: album.id },
+		props: { album },
+	}));
+}
+const { album } = Astro.props;
+const protectedAlbum = isEncryptedPost(album);
+---
+<MainGridLayout title={album.title} description={album.description || album.title}>
+  <CollectionHeader title={album.title} description={album.description || ""} eyebrow="PHOTO STORIES" icon="material-symbols:photo-library-outline-rounded" count={album.images.length} unit="张照片"><a href={url("/albums/")} class="text-[var(--primary)]">← 返回相册</a>{album.date && <time datetime={album.date}>{album.date}</time>}{album.location && <span>{album.location}</span>}</CollectionHeader>
+  <section class="card-base p-4 md:p-6">{protectedAlbum ? <EncryptedContent password={album.password} scope={`album:${album.id}`} hint={album.passwordHint} title="这是一册加密相册" description="输入密码，打开这段影像记忆。"><AlbumGallery photos={album.images} layout={album.layout} columns={album.columns}/></EncryptedContent> : <AlbumGallery photos={album.images} layout={album.layout} columns={album.columns}/>}</section>
+</MainGridLayout>

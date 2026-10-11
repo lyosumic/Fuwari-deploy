@@ -1,0 +1,7 @@
+---
+import { getSeriesList, seriesUrl } from "../../utils/series";
+
+const series = await getSeriesList();
+---
+{series.length > 0 && <section class="card-base m3-widget"><h2 class="m3-widget-title">系列</h2>{series.map(item => <a href={seriesUrl(item.id)} class="series-link"><span>{item.title}</span><small>{item.posts.length}</small></a>)}</section>}
+<style>.series-link { display: flex; justify-content: space-between; gap: .6rem; border-radius: 12px; padding: .6rem; color: var(--mc-on-surface); font-size: .85rem; } .series-link:hover { background: var(--btn-regular-bg); color: var(--primary); } small { color: var(--primary); }</style>

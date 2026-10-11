@@ -1,0 +1,41 @@
+---
+import { uiConfig } from "../ui-config";
+---
+{uiConfig.contextMenu && <div class="site-context-menu" role="menu" aria-label="页面快捷操作" hidden><button type="button" role="menuitem" data-context-action="copy">复制选中文字</button><button type="button" role="menuitem" data-context-action="share">复制页面链接</button><button type="button" role="menuitem" data-context-action="top">回到顶部</button><a role="menuitem" data-context-link target="_blank" rel="noopener noreferrer" hidden>在新标签页打开链接</a></div>}
+<script>
+const menu = document.querySelector<HTMLElement>(".site-context-menu");
+if (menu) {
+  let selection = "";
+  const close = () => { menu.hidden = true; };
+  document.addEventListener("contextmenu", event => {
+    if (event.shiftKey || !matchMedia("(pointer: fine)").matches || (event.target as Element).closest("input, textarea, [contenteditable], iframe, dialog[open]")) return;
+    event.preventDefault(); selection = getSelection()?.toString() || "";
+    const copy = menu.querySelector<HTMLButtonElement>("[data-context-action='copy']"); if (copy) copy.disabled = !selection.trim();
+    const link = (event.target as Element).closest<HTMLAnchorElement>("a[href]"); const open = menu.querySelector<HTMLAnchorElement>("[data-context-link]"); if (open) { open.hidden = !link; if (link) open.href = link.href; }
+    menu.hidden = false;
+    menu.style.left = `${Math.max(8, Math.min(event.clientX, innerWidth - menu.offsetWidth - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(event.clientY, innerHeight - menu.offsetHeight - 8))}px`;
+    menu.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true });
+  });
+  menu.addEventListener("click", async event => {
+    const action = (event.target as Element).closest<HTMLElement>("[data-context-action]")?.dataset.contextAction;
+    if (action === "top") window.scrollTo({ top: 0, behavior: document.documentElement.dataset.reducedMotion === "true" || matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    if (action === "copy" || action === "share") { try { await navigator.clipboard.writeText(action === "copy" ? selection : location.origin + location.pathname); } catch { /* Browser clipboard permission stays under user control. */ } }
+    close();
+  });
+  menu.addEventListener("keydown", event => {
+    const items = [...menu.querySelectorAll<HTMLElement>("button:not(:disabled), a:not([hidden])")];
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const next = event.key === "ArrowDown" ? (current + 1) % items.length : event.key === "ArrowUp" ? (current + items.length - 1) % items.length : null;
+    if (next !== null) { event.preventDefault(); items[next]?.focus(); }
+    if (event.key === "Escape") close();
+  });
+  document.addEventListener("pointerdown", event => { if (!menu.contains(event.target as Node)) close(); });
+  window.addEventListener("scroll", close, { passive: true });
+}
+</script>
+<style>
+  .site-context-menu { position: fixed; z-index: 250; min-width: 13rem; padding: .4rem; border-radius: 18px; background: var(--float-panel-bg); color: var(--mc-on-surface); box-shadow: 0 8px 28px rgb(0 0 0 / .16); }
+  .site-context-menu[hidden] { display: none; } button, a { display: block; width: 100%; text-align: left; border-radius: 12px; padding: .65rem .8rem; font-size: .8rem; } button:hover, a:hover { background: var(--btn-regular-bg); color: var(--primary); } button:disabled { opacity: .4; }
+  .site-context-menu [hidden] { display: none; }
+</style>

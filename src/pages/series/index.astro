@@ -1,0 +1,8 @@
+---
+import CollectionHeader from "../../components/CollectionHeader.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { getSeriesList, seriesUrl } from "../../utils/series";
+
+const series = await getSeriesList();
+---
+<MainGridLayout title="系列"><CollectionHeader title="文章系列" description="把相关的故事，串成一段完整的旅程。" eyebrow="READ IN ORDER" icon="material-symbols:menu-book-outline-rounded" count={series.length} unit="个系列"/><div class="grid gap-4 md:grid-cols-2">{series.map(item => <a href={seriesUrl(item.id)} class="card-base p-6"><h2 class="text-xl font-bold text-90 mb-3">{item.title}</h2><p class="text-50 mb-4">{item.description}</p><span class="text-[var(--primary)] text-sm">{item.posts.length} 篇文章 · {item.status === "completed" ? "已完结" : "连载中"} →</span></a>)}</div></MainGridLayout>

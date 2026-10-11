@@ -4,7 +4,7 @@ import { onMount } from "svelte";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { normalizeTerms } from "../utils/taxonomy-utils";
-import { getPostUrlBySlug } from "../utils/url-utils";
+import { getPostUrl } from "../utils/url-utils";
 
 export let tags: string[] = [];
 export let categories: string[] = [];
@@ -19,6 +19,7 @@ interface Post {
 	slug: string;
 	data: {
 		title: string;
+		routeUrl?: string;
 		tags: string[];
 		category?: string | string[] | null;
 		published: Date;
@@ -116,7 +117,7 @@ onMount(async () => {
 
             {#each group.posts as post}
                 <a
-                        href={getPostUrlBySlug(post.slug)}
+                        href={getPostUrl(post)}
                         aria-label={post.data.title}
                         class="group btn-plain !block h-10 w-full rounded-lg hover:text-[initial]"
                 >

@@ -45,6 +45,11 @@ collections:
       - { label: 加密文章, name: encrypted, widget: boolean, default: false, required: false }
       - { label: 阅读密码, name: password, widget: string, required: false, hint: '密码仅用于构建加密正文；源码仓库仍可看到原文和密码，请按需使用私有仓库。' }
       - { label: 密码提示, name: passwordHint, widget: string, required: false }
+      - { label: 开启文章评论, name: comment, widget: boolean, default: true, required: false }
+      - { label: 文章系列标识, name: series, widget: string, required: false, default: '' }
+      - { label: 系列内顺序, name: seriesOrder, widget: number, value_type: int, required: false }
+      - { label: 文章别名, name: alias, widget: string, required: false, hint: '生成 /posts/别名/，原地址仍可访问' }
+      - { label: 自定义固定链接, name: permalink, widget: string, required: false, hint: '例如 stories/my-post，禁止与系统页面同名' }
       - { label: 摘要, name: description, widget: text, required: false, default: '' }
       - { label: 封面图片, name: image, widget: image, required: false, default: '' }
       - { label: 标签（可多选）, name: tags, widget: taxonomy, kind: tags, required: false, default: [], hint: '选择历史标签或输入新标签，可添加多个。标签库可在个人简介与设置中管理。' }
@@ -185,6 +190,11 @@ collections:
             required: false
             default: []
             fields:
+              - { label: 草稿, name: draft, widget: boolean, default: false, required: false }
+              - { label: 置顶, name: pinned, widget: boolean, default: false, required: false }
+              - { label: 地点, name: location, widget: string, required: false }
+              - { label: 心情, name: mood, widget: string, required: false }
+              - { label: 标签, name: tags, widget: list, required: false, default: [] }
               - { label: 标识, name: id, widget: string, required: false, default: '' }
               - { label: 标题, name: title, widget: string, required: true, default: '' }
               - { label: 描述, name: description, widget: text, required: false, default: '' }
@@ -208,6 +218,14 @@ collections:
             required: false
             default: []
             fields:
+              - { label: 排版, name: layout, widget: select, options: [grid, masonry], default: grid, required: false }
+              - { label: 列数, name: columns, widget: number, min: 2, max: 4, default: 3, required: false }
+              - { label: 从列表隐藏, name: hidden, widget: boolean, default: false, required: false }
+              - { label: 密码保护, name: encrypted, widget: boolean, default: false, required: false }
+              - { label: 阅读密码, name: password, widget: string, required: false }
+              - { label: 密码提示, name: passwordHint, widget: string, required: false }
+              - { label: 拍摄地点, name: location, widget: string, required: false }
+              - { label: 相册标签, name: tags, widget: list, required: false, default: [] }
               - { label: 标识, name: id, widget: string, required: false, default: '' }
               - { label: 标题, name: title, widget: string, required: true, default: '' }
               - { label: 描述, name: description, widget: text, required: false, default: '' }
@@ -224,6 +242,13 @@ collections:
                 fields:
                   - { label: 图片, name: src, widget: image }
                   - { label: 说明, name: alt, widget: string, required: false, default: '' }
+                  - { label: 照片标题, name: title, widget: string, required: false }
+                  - { label: 描述, name: description, widget: text, required: false }
+                  - { label: 日期, name: date, widget: string, required: false }
+                  - { label: 地点, name: location, widget: string, required: false }
+                  - { label: 相机, name: camera, widget: string, required: false }
+                  - { label: 镜头, name: lens, widget: string, required: false }
+                  - { label: 拍摄参数, name: settings, widget: string, required: false }
           - label: 站点罗盘
             name: compass
             widget: list
@@ -312,3 +337,20 @@ collections:
               - { label: 状态, name: status, widget: string, required: false, default: '' }
               - { label: 艺术家, name: artist, widget: string, required: false, default: '' }
               - { label: 音频, name: source, widget: file, required: true, hint: '上传有权分享的音频，或填写音频地址。' }
+
+# album_layout editor extension
+
+  - name: series
+    label: 文章系列
+    folder: src/content/series
+    create: true
+    delete: true
+    format: yaml-frontmatter
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - { label: 描述, name: description, widget: text, required: false, default: '' }
+      - { label: 状态, name: status, widget: select, options: [ongoing, completed], default: ongoing }
+      - { label: 默认分类, name: defaultCategory, widget: taxonomy, kind: categories, required: false, default: [] }
+      - { label: 总览正文, name: body, widget: import-markdown, required: false }

@@ -1,0 +1,11 @@
+---
+import { getSeriesList, seriesUrl } from "../utils/series";
+import { getPostUrl } from "../utils/url-utils";
+
+const { entry } = Astro.props;
+const series = (await getSeriesList()).find(
+	(item) => item.id === entry.data.series,
+);
+---
+{series && <section class="card-base p-6 mb-4"><h2 class="m3-widget-title"><a href={seriesUrl(series.id)}>{series.title}</a></h2><ol class="series-order">{series.posts.map((post, index) => <li><a href={getPostUrl(post)} aria-current={post.slug === entry.slug ? "page" : undefined}><span>{index + 1}</span>{post.data.title}</a></li>)}</ol></section>}
+<style>.series-order a { display: flex; gap: .8rem; align-items: center; border-radius: 12px; padding: .6rem; font-size: .9rem; color: var(--mc-on-surface); } .series-order a[aria-current] { background: var(--btn-regular-bg); color: var(--primary); font-weight: 600; } span { font-size: .75rem; min-width: 1.3rem; color: var(--primary); }</style>

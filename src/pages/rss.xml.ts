@@ -1,6 +1,6 @@
 import rss from "@astrojs/rss";
 import { getSortedPosts } from "@utils/content-utils";
-import { url } from "@utils/url-utils";
+import { getPostUrl } from "@utils/url-utils";
 import type { APIContext } from "astro";
 import MarkdownIt from "markdown-it";
 import sanitizeHtml from "sanitize-html";
@@ -32,7 +32,7 @@ export async function GET(context: APIContext) {
 				title: post.data.title,
 				pubDate: post.data.published,
 				description: post.data.description || "",
-				link: url(`/posts/${post.slug}/`),
+				link: getPostUrl(post),
 				content: isEncryptedPost(post.data)
 					? "<p>这篇文章已加密，请到网站输入密码后阅读。</p>"
 					: sanitizeHtml(parser.render(cleanedContent), {

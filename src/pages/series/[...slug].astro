@@ -1,0 +1,19 @@
+---
+import CollectionHeader from "../../components/CollectionHeader.astro";
+import Markdown from "../../components/misc/Markdown.astro";
+import ShironePostCard from "../../components/ShironePostCard.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { getSeriesList } from "../../utils/series";
+export async function getStaticPaths() {
+	return (await getSeriesList()).map((series) => ({
+		params: { slug: series.id },
+		props: { series },
+	}));
+}
+const { series } = Astro.props;
+const rendered = series.definition
+	? await series.definition.render()
+	: undefined;
+const Content = rendered?.Content;
+---
+<MainGridLayout title={series.title} headings={rendered?.headings || []}><CollectionHeader title={series.title} description={series.description} eyebrow="READ IN ORDER" icon="material-symbols:menu-book-outline-rounded" count={series.posts.length} unit="篇文章"/>{Content && <section class="card-base p-6 mb-4"><Markdown class=""><Content/></Markdown></section>}<div class="post-list">{series.posts.map((entry: import("astro:content").CollectionEntry<"posts">) => <ShironePostCard entry={entry}/>)}</div></MainGridLayout>

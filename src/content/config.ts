@@ -32,6 +32,17 @@ const postsCollection = defineCollection({
 		encrypted: z.boolean().optional().default(false),
 		password: z.union([z.string(), z.number()]).optional(),
 		passwordHint: z.string().optional().default(""),
+		comment: z.boolean().optional().default(true),
+		series: z.string().trim().optional().default(""),
+		alias: z.string().optional().default(""),
+		permalink: z.string().optional().default(""),
+		routeUrl: z.string().optional(),
+		prevUrl: z.string().optional(),
+		nextUrl: z.string().optional(),
+		seriesOrder: z.preprocess(
+			(value) => (value === "" || value == null ? undefined : value),
+			z.number().int().optional(),
+		),
 
 		/* For internal use */
 		prevTitle: z.string().default(""),
@@ -90,7 +101,16 @@ const projectsCollection = defineCollection({
 	}),
 });
 
+const seriesCollection = defineCollection({
+	schema: z.object({
+		title: z.string(),
+		description: z.string().optional().default(""),
+		status: z.enum(["ongoing", "completed"]).optional().default("ongoing"),
+		defaultCategory: terms,
+	}),
+});
 export const collections = {
+	series: seriesCollection,
 	notes: notesCollection,
 	projects: projectsCollection,
 	posts: postsCollection,

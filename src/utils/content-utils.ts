@@ -3,6 +3,7 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils.ts";
 import { isEncryptedPost } from "./post-encryption";
+import { assignPostRoutes } from "./post-routes";
 import { normalizeTags } from "./tags-utils";
 import { normalizeTerms } from "./taxonomy-utils";
 
@@ -12,11 +13,19 @@ async function getRawSortedPosts() {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
 
+	const seriesDefinitions = allBlogPosts.some((post) => post.data.series)
+		? await getCollection("series")
+		: [];
 	const normalizedPosts = allBlogPosts.map((post) => ({
 		...post,
 		data: {
 			...post.data,
-			category: normalizeTerms(post.data.category),
+			category: normalizeTerms(post.data.category).length
+				? normalizeTerms(post.data.category)
+				: normalizeTerms(
+						seriesDefinitions.find((series) => series.slug === post.data.series)
+							?.data.defaultCategory,
+					),
 			tags: normalizeTags(post.data.tags),
 		},
 	}));
@@ -28,7 +37,7 @@ async function getRawSortedPosts() {
 		);
 	});
 	for (const post of sorted) isEncryptedPost(post.data);
-	return sorted;
+	return assignPostRoutes(sorted);
 }
 
 export async function getSortedPosts() {
@@ -36,10 +45,12 @@ export async function getSortedPosts() {
 
 	for (let i = 1; i < sorted.length; i++) {
 		sorted[i].data.nextSlug = sorted[i - 1].slug;
+		sorted[i].data.nextUrl = sorted[i - 1].data.routeUrl;
 		sorted[i].data.nextTitle = sorted[i - 1].data.title;
 	}
 	for (let i = 0; i < sorted.length - 1; i++) {
 		sorted[i].data.prevSlug = sorted[i + 1].slug;
+		sorted[i].data.prevUrl = sorted[i + 1].data.routeUrl;
 		sorted[i].data.prevTitle = sorted[i + 1].data.title;
 	}
 
@@ -95,9 +106,7 @@ export type Category = {
 };
 
 export async function getCategoryList(): Promise<Category[]> {
-	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
-	});
+	const allBlogPosts = await getRawSortedPosts();
 	const count = Object.create(null) as Record<string, number>;
 	let uncategorizedCount = 0;
 	allBlogPosts.forEach((post) => {

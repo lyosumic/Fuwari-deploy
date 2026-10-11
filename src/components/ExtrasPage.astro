@@ -3,6 +3,8 @@ import { Icon } from "astro-icon/components";
 import MarkdownIt from "markdown-it";
 import sanitizeHtml from "sanitize-html";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { albumUrl, getAlbums } from "../utils/albums";
+import { isEncryptedPost } from "../utils/post-encryption";
 import {
 	type ExtraModule,
 	extraModules,
@@ -14,7 +16,10 @@ import CollectionHeader from "./CollectionHeader.astro";
 
 const { module } = Astro.props as { module: ExtraModule };
 const info = extraModules[module];
-const entries = getExtraEntries(module);
+const entries =
+	module === "albums"
+		? getAlbums().filter((album) => !album.hidden)
+		: getExtraEntries(module);
 const categories = [
 	...new Set(entries.map((entry) => entry.category || "全部")),
 ];
@@ -27,12 +32,13 @@ const parser = new MarkdownIt({ html: false, linkify: true });
     {entries.map(entry => <article class="card-base extra-entry" data-extra-category={entry.category || "全部"}>
       {entry.image && safeImageUrl(entry.image) && <img src={safeImageUrl(entry.image)} alt={entry.title} loading="lazy" class="extra-cover" />}
       <div class="extra-body">
-        <div class="extra-meta">{entry.date && <time datetime={entry.date}>{entry.date}</time>}{entry.category && <span>{entry.category}</span>}{entry.status && <span>{entry.status}</span>}</div>
-        <h2>{safeExternalUrl(entry.url) ? <a href={safeExternalUrl(entry.url)} target="_blank" rel="noopener noreferrer">{entry.title} ↗</a> : entry.title}</h2>
+        <div class="extra-meta">{entry.pinned && <span>置顶</span>}{entry.date && <time datetime={entry.date}>{entry.date}</time>}{entry.category && <span>{entry.category}</span>}{entry.status && <span>{entry.status}</span>}{entry.location && <span>{entry.location}</span>}{entry.mood && <span>{entry.mood}</span>}</div>
+        <h2>{module === "albums" ? <a href={albumUrl(entry.id)}>{isEncryptedPost(entry) && "🔒 "}{entry.title} →</a> : safeExternalUrl(entry.url) ? <a href={safeExternalUrl(entry.url)} target="_blank" rel="noopener noreferrer">{entry.title} ↗</a> : entry.title}</h2>
         {entry.description && <p>{entry.description}</p>}
-        {entry.content && <div class="extra-markdown custom-md" set:html={sanitizeHtml(parser.render(entry.content))}></div>}
+        {entry.tags?.length && <p>{entry.tags.map(tag => `#${tag}`).join(" ")}</p>}
+        {module !== "albums" && entry.content && <div class="extra-markdown custom-md" set:html={sanitizeHtml(parser.render(entry.content))}></div>}
         {module === "skills" && typeof entry.level === "number" && <div class="skill-meter"><meter min="0" max="100" value={Math.max(0, Math.min(100, entry.level))} aria-label={entry.title}></meter><span>{Math.max(0, Math.min(100, entry.level))}%</span></div>}
-        {entry.images?.length && <div class="extra-images">{entry.images.filter(image => safeImageUrl(image.src)).map(image => <a href={safeImageUrl(image.src)} data-extra-image data-no-swup><img src={safeImageUrl(image.src)} alt={image.alt || entry.title} loading="lazy" /></a>)}</div>}
+        {module === "albums" ? <p>{entry.images?.length || 0} 张照片 · {isEncryptedPost(entry) ? "密码保护" : "打开相册"}</p> : entry.images?.length && <div class="extra-images">{entry.images.filter(image => safeImageUrl(image.src)).map(image => <a href={safeImageUrl(image.src)} data-extra-image data-no-swup><img src={safeImageUrl(image.src)} alt={image.alt || entry.title} loading="lazy" /></a>)}</div>}
       </div>
     </article>)}
   </div>

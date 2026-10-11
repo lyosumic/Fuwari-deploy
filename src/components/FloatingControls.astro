@@ -1,0 +1,34 @@
+---
+import { uiConfig } from "../ui-config";
+import { url } from "../utils/url-utils";
+---
+<nav class="floating-controls" aria-label="页面快捷导航"><a href={url("/")} class="floating-home" aria-label="返回主页">⌂</a><button type="button" data-fab-toc aria-label="打开文章目录" hidden>≡</button>{uiConfig.comments.enable && <a href="#comments" data-fab-comments aria-label="跳转评论" hidden>✎</a>}<button type="button" data-fab-top aria-label="返回顶部">↑</button></nav>
+<dialog id="floating-toc" class="floating-toc" aria-label="文章目录"><header><h2>文章目录</h2><button type="button" data-fab-close aria-label="关闭目录">×</button></header><nav data-fab-toc-content></nav></dialog>
+<script>
+const dialog = document.querySelector<HTMLDialogElement>("#floating-toc");
+const tocButton = document.querySelector<HTMLButtonElement>("[data-fab-toc]");
+function updateControls() {
+  const template = document.querySelector<HTMLDivElement>("#floating-toc-source");
+  const content = dialog?.querySelector("[data-fab-toc-content]");
+  if (content) { content.replaceChildren(); if (template) content.append(...Array.from(template.childNodes, child => child.cloneNode(true))); }
+  if (tocButton) tocButton.hidden = !template?.querySelector("a");
+  const comments = document.querySelector<HTMLAnchorElement>("[data-fab-comments]"); if (comments) comments.hidden = !document.getElementById("comments");
+  dialog?.close();
+}
+tocButton?.addEventListener("click", () => dialog?.showModal());
+dialog?.querySelector("[data-fab-close]")?.addEventListener("click", () => dialog.close());
+dialog?.addEventListener("click", event => { if ((event.target as Element).closest("a") || event.target === dialog) dialog.close(); });
+document.querySelector("[data-fab-top]")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: document.documentElement.dataset.reducedMotion === "true" || matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }));
+updateControls();
+if (window.swup) window.swup.hooks.on("page:view", updateControls);
+else document.addEventListener("swup:enable", () => window.swup.hooks.on("page:view", updateControls), { once: true });
+</script>
+<style>
+  .floating-controls { position: fixed; bottom: max(1.5rem, env(safe-area-inset-bottom)); right: max(1.2rem, env(safe-area-inset-right)); z-index: 65; display: flex; flex-direction: column; gap: .5rem; }
+  .floating-controls button, .floating-controls a { display: grid; place-items: center; width: 2.8rem; height: 2.8rem; border-radius: 16px; color: var(--primary); background: var(--btn-regular-bg); box-shadow: 0 3px 12px rgb(0 0 0 / .09); font-size: 1.4rem; }
+  .floating-controls [hidden] { display: none; } :global(body.is-home) .floating-home { display: none; }
+  .floating-toc { width: min(90vw, 28rem); max-height: 75dvh; border: 0; border-radius: 24px; padding: 1.4rem; color: var(--mc-on-surface); background: var(--card-bg); } .floating-toc::backdrop { background: rgb(0 0 0 / .5); }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; } header button { padding: .25rem .65rem; border-radius: 50%; background: var(--btn-regular-bg); color: var(--primary); }
+  [data-fab-toc-content] :global(a) { display: block; padding: .55rem; border-radius: 12px; font-size: .9rem; color: var(--mc-on-surface-variant); } [data-fab-toc-content] :global(a:hover) { color: var(--primary); background: var(--btn-regular-bg); }
+  @media (min-width: 1280px) { .floating-controls [data-fab-toc], .floating-controls .floating-home, .floating-controls [data-fab-comments] { display: none; } }
+</style>

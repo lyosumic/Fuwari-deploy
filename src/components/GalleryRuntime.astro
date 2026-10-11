@@ -1,0 +1,36 @@
+<script>
+import type { AlbumPhoto } from "../types/album";
+function showPhoto(gallery: HTMLElement, position: number) {
+  const photos = JSON.parse(gallery.dataset.photos || "[]") as AlbumPhoto[];
+  if (!photos.length) return;
+  const index = (position + photos.length) % photos.length;
+  const photo = photos[index]; const dialog = gallery.querySelector<HTMLDialogElement>("dialog"); if (!dialog) return;
+  dialog.dataset.index = String(index); dialog.dataset.zoomed = "false";
+  const image = dialog.querySelector(".photo-stage img") as HTMLImageElement; image.src = photo.src; image.alt = photo.alt || photo.title || "相册照片";
+  const caption = dialog.querySelector("[data-photo-caption]"); if (caption) caption.textContent = [photo.title, photo.description].filter(Boolean).join(" · ");
+  const meta = dialog.querySelector("[data-photo-meta]"); if (meta) meta.textContent = [photo.date, photo.location, photo.camera, photo.lens, photo.settings].filter(Boolean).join(" · ");
+  const count = dialog.querySelector("[data-photo-count]"); if (count) count.textContent = `${index + 1} / ${photos.length}`;
+  const original = dialog.querySelector<HTMLAnchorElement>("[data-photo-download]"); if (original) original.href = photo.src;
+  if (!dialog.open) dialog.showModal();
+}
+document.addEventListener("click", event => {
+  const target = event.target as Element;
+  const open = target.closest<HTMLElement>("[data-gallery-open]");
+  if (open) { const gallery = open.closest<HTMLElement>(".album-gallery"); if (gallery) { event.preventDefault(); showPhoto(gallery, Number(open.dataset.galleryOpen)); } return; }
+  const action = target.closest<HTMLElement>("[data-photo-action]"); const dialog = action?.closest<HTMLDialogElement>(".photo-dialog"); const gallery = dialog?.closest<HTMLElement>(".album-gallery");
+  if (!action || !dialog || !gallery) { if (target instanceof HTMLDialogElement && target.classList.contains("photo-dialog")) target.close(); return; }
+  const index = Number(dialog.dataset.index || 0);
+  if (action.dataset.photoAction === "previous") showPhoto(gallery, index - 1);
+  if (action.dataset.photoAction === "next") showPhoto(gallery, index + 1);
+  if (action.dataset.photoAction === "close") { if (document.fullscreenElement === dialog) void document.exitFullscreen(); dialog.close(); }
+  if (action.dataset.photoAction === "zoom") dialog.dataset.zoomed = String(dialog.dataset.zoomed !== "true");
+  if (action.dataset.photoAction === "fullscreen") { if (document.fullscreenElement) document.exitFullscreen(); else dialog.requestFullscreen?.().catch(() => {}); }
+});
+document.addEventListener("keydown", event => {
+  const dialog = document.querySelector<HTMLDialogElement>(".photo-dialog[open]"); const gallery = dialog?.closest<HTMLElement>(".album-gallery"); if (!dialog || !gallery) return;
+  if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); showPhoto(gallery, Number(dialog.dataset.index || 0) + (event.key === "ArrowRight" ? 1 : -1)); }
+});
+let swipeStart: number | undefined;
+document.addEventListener("touchstart", event => { if ((event.target as Element).closest(".photo-dialog")) swipeStart = event.touches[0]?.clientX; }, { passive: true });
+document.addEventListener("touchend", event => { const dialog = (event.target as Element).closest<HTMLDialogElement>(".photo-dialog"); const gallery = dialog?.closest<HTMLElement>(".album-gallery"); const end = event.changedTouches[0]?.clientX; if (gallery && dialog && dialog.dataset.zoomed !== "true" && swipeStart !== undefined && end !== undefined && Math.abs(end - swipeStart) > 50) showPhoto(gallery, Number(dialog.dataset.index || 0) + (end < swipeStart ? 1 : -1)); swipeStart = undefined; }, { passive: true });
+</script>

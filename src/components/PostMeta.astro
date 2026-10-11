@@ -3,6 +3,7 @@ import { Icon } from "astro-icon/components";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
+import { normalizeTerms } from "../utils/taxonomy-utils";
 import { getCategoryUrl, getTagUrl } from "../utils/url-utils";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 	published: Date;
 	updated?: Date;
 	tags: string[];
-	category: string | null;
+	category: string | readonly string[] | null;
 	hideTagsForMobile?: boolean;
 	hideUpdateDate?: boolean;
 }
@@ -23,6 +24,7 @@ const {
 	hideUpdateDate = false,
 } = Astro.props;
 const className = Astro.props.class;
+const categories = normalizeTerms(category);
 ---
 
 <div class:list={["flex flex-wrap text-neutral-500 dark:text-neutral-400 items-center gap-4 gap-x-4 gap-y-2", className]}>
@@ -52,12 +54,13 @@ const className = Astro.props.class;
         >
             <Icon name="material-symbols:book-2-outline-rounded" class="text-xl"></Icon>
         </div>
-        <div class="flex flex-row flex-nowrap items-center">
-            <a href={getCategoryUrl(category)} aria-label={`View all posts in the ${category} category`}
+        <div class="flex flex-row flex-wrap gap-x-3 gap-y-2 items-center">
+            {categories.map((name) => <a href={getCategoryUrl(name)} aria-label={`View all posts in the ${name} category`}
                class="link-lg transition text-50 text-sm font-medium
                             hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap">
-                {category || i18n(I18nKey.uncategorized)}
-            </a>
+                {name}
+            </a>)}
+            {!categories.length && <a href={getCategoryUrl(null)} class="link-lg text-50 text-sm font-medium">{i18n(I18nKey.uncategorized)}</a>}
         </div>
     </div>
 
@@ -67,7 +70,7 @@ const className = Astro.props.class;
         >
             <Icon name="material-symbols:tag-rounded" class="text-xl"></Icon>
         </div>
-        <div class="flex flex-row flex-nowrap items-center">
+        <div class="flex flex-row flex-wrap gap-y-2 items-center">
             {(tags && tags.length > 0) && tags.map((tag, i) => (
                 <div class:list={[{"hidden": i == 0}, "mx-1.5 text-[var(--meta-divider)] text-sm"]}>/</div>
                 <a href={getTagUrl(tag)} aria-label={`View all posts with the ${tag.trim()} tag`}

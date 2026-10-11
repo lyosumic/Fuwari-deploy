@@ -30,4 +30,6 @@ const links = Astro.props.links;
             </Icon>}
         </a>
     ))}
+    <div class="extra-mobile-links">{[["关于", "/about/"], ["站点罗盘", "/compass/"], ["时间线", "/timeline/"], ["我的设备", "/devices/"], ["技能", "/skills/"], ["游戏", "/games/"]].map(([name, path]) => <a href={url(path)} class="btn-plain p-3 rounded-xl justify-start">{name}</a>)}</div>
 </div>
+<style>#nav-menu-panel { max-height: calc(100dvh - 7rem); overflow-y: auto; } .extra-mobile-links { border-top: 1px solid var(--line-color); margin-top: .5rem; padding-top: .5rem; }</style>

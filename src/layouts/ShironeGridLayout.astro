@@ -1,0 +1,69 @@
+---
+import type { MarkdownHeading } from "astro";
+import BackToTop from "../components/control/BackToTop.astro";
+import Footer from "../components/Footer.astro";
+import MarkdownEnhancements from "../components/MarkdownEnhancements.astro";
+import ImageWrapper from "../components/misc/ImageWrapper.astro";
+import Navbar from "../components/Navbar.astro";
+import ShironeRuntime from "../components/ShironeRuntime.astro";
+import Announcement from "../components/widget/Announcement.astro";
+import MusicPlayer from "../components/widget/MusicPlayer.astro";
+import SideBar from "../components/widget/SideBar.astro";
+import SidebarDetails from "../components/widget/SidebarDetails.astro";
+import { siteConfig } from "../config";
+import extras from "../data/site-extras.json";
+import { uiConfig } from "../ui-config";
+import { colorVariables } from "../utils/ui-preferences";
+import Layout from "./Layout.astro";
+
+interface Props {
+	title?: string;
+	banner?: string;
+	description?: string;
+	lang?: string;
+	setOGTypeArticle?: boolean;
+	headings?: MarkdownHeading[];
+}
+const {
+	title,
+	banner,
+	description,
+	lang,
+	setOGTypeArticle,
+	headings = [],
+} = Astro.props;
+const hue = siteConfig.themeColor.hue;
+const singleSidebar = uiConfig.sidebars === "single";
+const paletteCss = [false, true]
+	.map(
+		(dark) =>
+			`${dark ? ":root.dark" : ":root"}{${Object.entries(
+				colorVariables(hue, dark, "tonalSpot", "2025"),
+			)
+				.map(([name, value]) => `${name}:${value}`)
+				.join(";")}}`,
+	)
+	.join("");
+---
+<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle}>
+  <Fragment slot="head"><slot name="head" /><style is:inline set:html={paletteCss}></style></Fragment>
+  <div class="m3-progress" aria-hidden="true"></div><div class="m3-route-progress" aria-hidden="true"></div>
+  <div id="m3-top-row"><div id="navbar-wrapper" class="floating-navbar"><Navbar /></div></div>
+  <section class="m3-banner" id="m3-banner" aria-label="网站横幅">
+    {siteConfig.banner.enable && [siteConfig.banner.src, ...uiConfig.bannerImages.filter(source => source !== siteConfig.banner.src)].map((source, index) => <ImageWrapper src={source} position={siteConfig.banner.position} alt="博客横幅" class={`banner-image hero-slide ${index === 0 ? "is-active" : ""}`} />)}
+    <div class="m3-hero"><h1>{siteConfig.title}</h1><p data-hero-text data-typewriter={uiConfig.heroTypewriter} data-subtitles={JSON.stringify(uiConfig.heroSubtitles.length ? uiConfig.heroSubtitles : [siteConfig.subtitle])}>{siteConfig.subtitle}</p></div>
+    {siteConfig.banner.credit.enable && <a class="m3-credit" href={siteConfig.banner.credit.url} target="_blank" rel="noopener noreferrer">{siteConfig.banner.credit.text} ↗</a>}
+    <svg class="m3-waves" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 45 Q180 0 360 45 T720 45 T1080 45 T1440 45 V100 H0Z" fill="currentColor" opacity=".3" /><path d="M0 62 Q180 15 360 62 T720 62 T1080 62 T1440 62 V100 H0Z" fill="currentColor" opacity=".6" /><path d="M0 78 Q180 25 360 78 T720 78 T1080 78 T1440 78 V100 H0Z" fill="currentColor" /></svg>
+  </section>
+  <div class="m3-shell"><div class:list={["m3-grid", {"m3-grid-single": singleSidebar}]}>
+    <aside class="m3-primary"><SideBar />{uiConfig.music.enable && extras.music.length > 0 && <MusicPlayer />}<Announcement />{singleSidebar && <SidebarDetails headings={headings} />}</aside>
+    <main id="swup-container" class="transition-swup-fade m3-main"><div id="content-wrapper" class="onload-animation"><slot /></div></main>
+    {!singleSidebar && <aside class="m3-secondary"><SidebarDetails headings={headings} /></aside>}
+  </div><Footer /><BackToTop /></div>
+  <ShironeRuntime />
+  <MarkdownEnhancements />
+</Layout>
+<style>
+  .floating-navbar { position: fixed; z-index: 70; top: max(16px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); max-width: 78rem; margin-inline: auto; }
+  .m3-toc:has([data-has-toc="false"]) { display: none; }
+</style>

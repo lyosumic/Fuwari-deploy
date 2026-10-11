@@ -1,0 +1,99 @@
+---
+import { profileConfig, siteConfig } from "../config";
+import { uiConfig } from "../ui-config";
+import { getSortedPosts } from "../utils/content-utils";
+import { getPostUrlBySlug } from "../utils/url-utils";
+
+const { entry } = Astro.props;
+const posts = uiConfig.article.related ? await getSortedPosts() : [];
+const related = posts
+	.filter(
+		(post) =>
+			post.slug !== entry.slug &&
+			(post.data.tags.some((tag: string) => entry.data.tags.includes(tag)) ||
+				post.data.category.some((category) =>
+					entry.data.category.includes(category),
+				)),
+	)
+	.slice(0, 3);
+const recommendations = posts
+	.filter(
+		(post) =>
+			post.slug !== entry.slug &&
+			!related.some((item) => item.slug === post.slug),
+	)
+	.slice(0, 2);
+const lastUpdated = entry.data.updated || entry.data.published;
+const old =
+	Date.now() - lastUpdated.getTime() >=
+	uiConfig.article.updatedNoticeDays * 86400000;
+---
+{old && <aside class="card-base updated-notice">本文最后更新于 <time datetime={lastUpdated.toISOString()}>{lastUpdated.toISOString().slice(0, 10)}</time>，部分内容可能随时间变化。</aside>}
+{uiConfig.article.share && <section class="card-base article-share" data-share-title={entry.data.title} data-share-description={entry.data.description} data-share-author={profileConfig.name} data-share-site={siteConfig.title}>
+  <h2 class="m3-widget-title">分享这篇文章</h2>
+  <div class="share-buttons"><button type="button" data-share-native>分享</button><button type="button" data-share-copy>复制链接</button><button type="button" data-share-poster>生成海报</button></div>
+  <p data-share-status aria-live="polite"></p>
+  <dialog class="poster-dialog"><button type="button" data-poster-close aria-label="关闭海报">×</button><canvas width="800" height="1100"></canvas><a download="article-poster.png">下载海报</a></dialog>
+</section>}
+{(related.length > 0 || recommendations.length > 0) && <section class="card-base article-discovery"><h2 class="m3-widget-title">延伸阅读</h2><div>{[...related, ...recommendations].map(post => <a href={getPostUrlBySlug(post.slug)}><span>{post.data.title}</span><small>{post.data.published.toISOString().slice(0, 10)}</small></a>)}</div></section>}
+<script>
+function setupSharing() {
+  const sharing = document.querySelector<HTMLElement>(".article-share");
+  if (!sharing || sharing.dataset.initialized) return;
+  sharing.dataset.initialized = "true";
+  const status = sharing.querySelector<HTMLElement>("[data-share-status]");
+  const canonical = location.origin + location.pathname;
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(canonical); if (status) status.textContent = "链接已复制。"; }
+    catch { if (status) status.textContent = `请复制：${canonical}`; }
+  }
+  sharing.querySelector("[data-share-copy]")?.addEventListener("click", copyLink);
+  sharing.querySelector("[data-share-native]")?.addEventListener("click", async () => {
+    if (!navigator.share) return copyLink();
+    try { await navigator.share({ title: sharing.dataset.shareTitle, url: canonical }); } catch { /* Closing the native sheet is not an error. */ }
+  });
+  const dialog = sharing.querySelector<HTMLDialogElement>("dialog");
+  sharing.querySelector("[data-poster-close]")?.addEventListener("click", () => dialog?.close());
+  sharing.querySelector("[data-share-poster]")?.addEventListener("click", async () => {
+    try {
+      const canvas = sharing.querySelector("canvas");
+      const context = canvas?.getContext("2d");
+      if (!context || !canvas || !dialog) return;
+      const { default: QRCode } = await import("qrcode");
+      await document.fonts.ready;
+      const font = getComputedStyle(document.body).fontFamily;
+      const root = getComputedStyle(document.documentElement);
+      const background = root.getPropertyValue("--mc-surface").trim() || "#f7f2fa";
+      const primary = root.getPropertyValue("--mc-primary").trim() || "#675080";
+      const text = root.getPropertyValue("--mc-on-surface").trim() || "#25202a";
+      context.fillStyle = background; context.fillRect(0, 0, 800, 1100);
+      context.fillStyle = primary; context.fillRect(60, 90, 8, 70);
+      context.font = `600 28px ${font}`; context.fillText(sharing.dataset.shareSite || "", 92, 132);
+      context.fillStyle = text; context.font = `700 46px ${font}`;
+      function lines(value: string, y: number, width: number, lineHeight: number, max: number) {
+        let line = ""; let count = 0;
+        for (const char of value) { if (context!.measureText(line + char).width > width) { context!.fillText(line, 64, y + count++ * lineHeight); line = char; if (count >= max) return; } else line += char; }
+        if (line) context!.fillText(line, 64, y + count * lineHeight);
+      }
+      lines(sharing.dataset.shareTitle || "", 265, 672, 70, 4);
+      context.font = `400 27px ${font}`; lines(sharing.dataset.shareDescription || "", 570, 672, 44, 4);
+      const qr = document.createElement("canvas"); await QRCode.toCanvas(qr, canonical, { width: 180, margin: 1 });
+      context.drawImage(qr, 64, 830, 180, 180);
+      context.fillStyle = primary; context.font = `600 28px ${font}`; context.fillText(sharing.dataset.shareAuthor || "", 275, 910);
+      context.font = `400 21px ${font}`; context.fillText("扫码阅读全文", 275, 952);
+      const link = dialog.querySelector("a"); if (link) link.href = canvas.toDataURL("image/png");
+      dialog.showModal();
+    } catch { if (status) status.textContent = "暂时无法生成海报，请使用复制链接。"; }
+  });
+}
+setupSharing();
+if (window.swup) window.swup.hooks.on("page:view", setupSharing);
+else document.addEventListener("swup:enable", () => window.swup.hooks.on("page:view", setupSharing), { once: true });
+</script>
+<style>
+  .article-share, .article-discovery { padding: 1.5rem; margin-bottom: 1rem; } .updated-notice { padding: 1rem 1.5rem; margin-bottom: 1rem; color: var(--mc-on-surface-variant); font-size: .85rem; background: var(--mc-surface-container-low); }
+  .share-buttons { display: flex; flex-wrap: wrap; gap: .5rem; } .share-buttons button, .poster-dialog a { background: var(--btn-regular-bg); color: var(--primary); padding: .65rem 1rem; border-radius: 99px; font-size: .85rem; }
+  [data-share-status] { font-size: .8rem; color: var(--primary); margin-top: .5rem; }
+  .article-discovery a { display: flex; gap: 1rem; justify-content: space-between; border-bottom: 1px solid var(--line-color); padding: .75rem 0; font-size: .9rem; color: var(--mc-on-surface); } .article-discovery small { white-space: nowrap; font-size: .75rem; color: var(--mc-on-surface-variant); }
+  .poster-dialog { background: var(--card-bg); border: 0; border-radius: 24px; padding: 1rem; max-width: min(92vw, 30rem); max-height: 94dvh; } .poster-dialog::backdrop { background: rgb(0 0 0 / .6); } canvas { width: 100%; display: block; margin-bottom: 1rem; } [data-poster-close] { position: absolute; right: 1rem; top: 1rem; font-size: 1.5rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--primary); color: var(--mc-on-primary); }
+</style>

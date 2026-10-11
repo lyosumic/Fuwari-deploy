@@ -1,5 +1,11 @@
 import { defineCollection, z } from "astro:content";
 import { isSafeContentUrl } from "../utils/file-utils";
+import { normalizeTerms } from "../utils/taxonomy-utils";
+
+const terms = z
+	.union([z.string(), z.array(z.string()), z.null()])
+	.optional()
+	.transform(normalizeTerms);
 
 const contentUrl = z
 	.string()
@@ -19,9 +25,13 @@ const postsCollection = defineCollection({
 		draft: z.boolean().optional().default(false),
 		description: z.string().optional().default(""),
 		image: z.string().optional().default(""),
-		tags: z.array(z.string()).optional().default([]),
-		category: z.string().optional().nullable().default(""),
+		tags: terms,
+		category: terms,
 		lang: z.string().optional().default(""),
+		pinned: z.boolean().optional().default(false),
+		encrypted: z.boolean().optional().default(false),
+		password: z.union([z.string(), z.number()]).optional(),
+		passwordHint: z.string().optional().default(""),
 
 		/* For internal use */
 		prevTitle: z.string().default(""),

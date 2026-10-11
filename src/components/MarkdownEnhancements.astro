@@ -1,0 +1,75 @@
+<script>
+let renderCounter = 0;
+function enhanceWidgets() {
+	document.querySelectorAll<HTMLElement>(".m3-code-tree").forEach(tree => {
+		if (tree.dataset.ready) return;
+		tree.dataset.ready = "true";
+		const files = [...tree.querySelectorAll<HTMLButtonElement>("[data-file-target]")];
+		const panes = [...tree.querySelectorAll<HTMLElement>("[data-file-path]")];
+		const select = (file: HTMLButtonElement) => {
+			files.forEach(button => { const active = button === file; button.closest("[role='treeitem']")?.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; button.classList.toggle("m3-code-tree__file-btn--active", active); });
+			panes.forEach(pane => { pane.hidden = pane.dataset.filePath !== file.dataset.fileTarget; pane.classList.toggle("hidden", pane.hidden); pane.style.display = pane.hidden ? "none" : ""; });
+		};
+		files.forEach((file, index) => {
+			file.onclick = () => select(file);
+			file.onkeydown = event => { const next = event.key === "ArrowDown" ? (index + 1) % files.length : event.key === "ArrowUp" ? (index + files.length - 1) % files.length : null; if (next !== null) { event.preventDefault(); select(files[next]); files[next].focus(); } };
+		});
+		const initial = files.find(file => file.closest("[role='treeitem']")?.getAttribute("aria-selected") === "true") || files[0];
+		if (initial) select(initial);
+		const expand = tree.querySelector<HTMLButtonElement>("[data-expand-label]");
+		expand?.addEventListener("click", () => { if (document.fullscreenElement === tree) document.exitFullscreen(); else tree.requestFullscreen?.().catch(() => {}); });
+	});
+  document.querySelectorAll<HTMLElement>("[data-option-group]").forEach(group => {
+    if (group.dataset.enhanced) return;
+    group.dataset.enhanced = "true";
+    const tabs = [...group.querySelectorAll<HTMLButtonElement>("[role='tab']")];
+    const panels = [...group.querySelectorAll<HTMLElement>("[role='tabpanel']")];
+    function select(index: number, focus = false) {
+      tabs.forEach((tab, position) => { tab.setAttribute("aria-selected", String(position === index)); tab.tabIndex = position === index ? 0 : -1; tab.classList.toggle("m3-option-group__tab--active", position === index); });
+      panels.forEach((panel, position) => { panel.hidden = position !== index; panel.classList.toggle("m3-option-group__panel--active", position === index); });
+      if (focus) tabs[index]?.focus();
+    }
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => select(index));
+      tab.addEventListener("keydown", event => {
+        const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : null;
+        if (next !== null) { event.preventDefault(); select(next, true); }
+      });
+    });
+    select(Math.max(0, tabs.findIndex(tab => tab.getAttribute("aria-selected") === "true")));
+  });
+  document.querySelectorAll<HTMLElement>("[data-audio-reader]").forEach(reader => {
+    if (reader.dataset.ready) return;
+    reader.dataset.ready = "true";
+    const audio = reader.querySelector<HTMLAudioElement>("audio");
+    const button = reader.querySelector<HTMLButtonElement>("[data-audio-reader-toggle]");
+    if (!audio || !button) return;
+    button.addEventListener("click", () => { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+    audio.addEventListener("play", () => button.setAttribute("aria-pressed", "true"));
+    audio.addEventListener("pause", () => button.setAttribute("aria-pressed", "false"));
+    audio.addEventListener("ended", () => button.setAttribute("aria-pressed", "false"));
+  });
+}
+async function enhanceMarkdown() {
+  enhanceWidgets();
+  const blocks = document.querySelectorAll<HTMLElement>("figure[data-mermaid], pre[data-language='mermaid'], pre:has(code.language-mermaid)");
+  if (!blocks.length) return;
+  const { default: mermaid } = await import("mermaid");
+  mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: document.documentElement.classList.contains("dark") ? "dark" : "default", fontFamily: getComputedStyle(document.body).fontFamily });
+  for (const block of blocks) {
+    if (block.dataset.rendered) continue;
+    block.dataset.rendered = "true";
+    const source = block.querySelector("code, pre")?.textContent || block.textContent || "";
+    try {
+      const { svg } = await mermaid.render(`blog-diagram-${++renderCounter}`, source);
+      const figure = document.createElement("figure"); figure.className = "mermaid-diagram"; figure.innerHTML = svg;
+      const wrapper = block.closest(".expressive-code") || block; wrapper.replaceWith(figure);
+    } catch { block.dataset.rendered = "false"; }
+  }
+}
+enhanceMarkdown();
+document.addEventListener("ui:markdown-unlocked", enhanceMarkdown);
+if (window.swup) window.swup.hooks.on("page:view", enhanceMarkdown);
+else document.addEventListener("swup:enable", () => window.swup.hooks.on("page:view", enhanceMarkdown), { once: true });
+</script>
+<style is:global>.mermaid-diagram { overflow: auto; margin: 1.5rem 0; border-radius: 20px; padding: 1rem; background: var(--mc-surface-container-low); } .mermaid-diagram svg { max-width: 100%; margin: auto; } .custom-md details { border-radius: 16px; background: var(--mc-surface-container-low); padding: 1rem 1.2rem; margin: 1rem 0; } .custom-md summary { cursor: pointer; color: var(--primary); font-weight: 600; } .custom-md mark { background: var(--mc-tertiary-container); color: var(--mc-on-tertiary-container); border-radius: 4px; padding: 0 .15em; }</style>

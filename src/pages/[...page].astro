@@ -1,11 +1,10 @@
 ---
 import type { GetStaticPaths } from "astro";
-import CollectionHeader from "../components/CollectionHeader.astro";
 import Pagination from "../components/control/Pagination.astro";
-import PostPage from "../components/PostPage.astro";
+import PostPage from "../components/ShironePostPage.astro";
 import { PAGE_SIZE } from "../constants/constants";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
-import { getSortedPosts } from "../utils/content-utils";
+import { getCategoryList, getSortedPosts } from "../utils/content-utils";
 import { url } from "../utils/url-utils";
 
 export const getStaticPaths = (async ({ paginate }) => {
@@ -42,13 +41,11 @@ export const getStaticPaths = (async ({ paginate }) => {
 const { page } = Astro.props;
 
 const len = page.data.length;
+const categories = await getCategoryList();
 ---
 
 <MainGridLayout>
-    {page.currentPage === 1 && <CollectionHeader title="记录，思考，创造。" eyebrow="LYOSUMIC'S JOURNAL" description="一些日常的思考，一些学习的痕迹，还有把想法变成代码的过程。欢迎来到我的小小空间。" icon="material-symbols:edit-note-rounded" count={page.total} unit="篇文章">
-        <a class="link text-[var(--primary)] font-medium" href={url("/notes/")}>翻阅笔记 ↗</a>
-        <a class="link text-[var(--primary)] font-medium" href={url("/projects/")}>探索项目 ↗</a>
-    </CollectionHeader>}
+    <nav class="card-base m3-category-strip" aria-label="文章分类"><a href={url("/")}>主页</a><a href={url("/archive/")}>归档</a>{categories.map(category => <a href={category.url}>{category.name}<small>{category.count}</small></a>)}</nav>
     <PostPage page={page}></PostPage>
     {page.lastPage > 1 && <Pagination class="mx-auto onload-animation" page={page} style={`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`}></Pagination>}
 </MainGridLayout>

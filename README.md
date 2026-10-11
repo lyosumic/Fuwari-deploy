@@ -1,5 +1,20 @@
 # Fuwari Deploy · deploy-v0.1.0
 
+最新 Shirone 界面请使用仓库 `main`：克隆仓库或下载 [最新源码 ZIP](https://github.com/lyosumic/Fuwari-deploy/archive/refs/heads/main.zip)，解压后双击 `deploy.cmd`。旧 `deploy-v0.1.0` Release 保留为历史快照。
+
+## Shirone 界面与功能
+
+现已加入 Shirone 风格与作者功能，保留原后台、PDF 笔记、项目附件与字体。胶囊导航顺序为主页、笔记、项目、归档、动态、相册、更多；模板指南已删除。
+
+双侧栏、统计与日历、9 种 Material HCT 配色、背景纹理、列表/网格、分享海报、置顶/加密、MDX/Mermaid 和 Markdown 扩展现已接入。动态、相册、罗盘、时间线、设备、技能、游戏与音乐可在原后台编辑；新模块初始为空，不复制参考作者个人数据。
+
+完整功能、配置和版权说明见 [Shirone 迁移说明](docs/shirone-migration.zh-CN.md)。
+
+- 开源项目：[LyraVoid/Shirone](https://github.com/LyraVoid/Shirone)
+- 官方文档：[docs.shirone.mysqil.com](https://docs.shirone.mysqil.com/)
+- 演示网站：[shirone.akatsuki.codes](https://shirone.akatsuki.codes/)
+
+
 基于现有 Fuwari / Astro 博客整理的源码与一键部署工具。文章、笔记、项目、个人简介、标签库、图片及主题配置保留；原版 README 见 [docs/README.upstream.md](docs/README.upstream.md)。
 
 ## 可行性与部署方式

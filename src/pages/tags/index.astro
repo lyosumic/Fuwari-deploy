@@ -1,0 +1,10 @@
+---
+import CollectionHeader from "../../components/CollectionHeader.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { getTagList } from "../../utils/content-utils";
+import { getTagUrl } from "../../utils/url-utils";
+
+const tags = await getTagList();
+---
+<MainGridLayout title="标签"><CollectionHeader title="标签" description="从一个关键词，发现更多相关的故事。" eyebrow="FOLLOW YOUR CURIOSITY" icon="material-symbols:tag-rounded" count={tags.length} unit="个标签" /><section class="card-base p-6"><div class="taxonomy-cloud">{tags.map(tag => <a href={getTagUrl(tag.name)}># {tag.name}<span>{tag.count}</span></a>)}</div></section></MainGridLayout>
+<style>.taxonomy-cloud { display: flex; flex-wrap: wrap; gap: .6rem; } a { padding: .6rem .9rem; border-radius: 99px; background: var(--btn-regular-bg); color: var(--primary); } span { margin-left: .7rem; font-size: .75rem; }</style>

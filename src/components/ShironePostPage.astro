@@ -1,0 +1,10 @@
+---
+import type { CollectionEntry } from "astro:content";
+import ShironePostCard from "./ShironePostCard.astro";
+
+const { page } = Astro.props;
+---
+<div class="post-list">
+  {page.data.map((entry: CollectionEntry<"posts">) => <ShironePostCard entry={entry} />)}
+  {!page.data.length && <section class="card-base p-10 text-center"><h2 class="text-xl font-bold mb-3">还没有公开的文章</h2><p class="text-50">这里会慢慢收藏我的思考与日常。</p></section>}
+</div>

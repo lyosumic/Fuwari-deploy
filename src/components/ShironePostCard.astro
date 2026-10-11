@@ -1,0 +1,23 @@
+---
+import type { CollectionEntry } from "astro:content";
+import path from "node:path";
+import { isEncryptedPost } from "../utils/post-encryption";
+import { getDir, getPostUrlBySlug, getTagUrl } from "../utils/url-utils";
+import ImageWrapper from "./misc/ImageWrapper.astro";
+import PostMeta from "./PostMeta.astro";
+
+const { entry } = Astro.props as { entry: CollectionEntry<"posts"> };
+const { remarkPluginFrontmatter } = await entry.render();
+const href = getPostUrlBySlug(entry.slug);
+const encrypted = isEncryptedPost(entry.data);
+---
+<article class="card-base post-card">
+  <div class="post-card-body">
+    <a class="post-card-title" href={href}>{entry.data.pinned && <span aria-label="置顶">⌖ </span>}{encrypted && <span aria-label="加密">🔒 </span>}{entry.data.title} <span aria-hidden="true">›</span></a>
+    <PostMeta class="" published={entry.data.published} updated={entry.data.updated} category={entry.data.category} tags={[]} hideTagsForMobile={true} hideUpdateDate={true} />
+    <p class="post-card-description">{encrypted ? "该文章内容已加密，请输入密码后查看。" : entry.data.description || remarkPluginFrontmatter.excerpt}</p>
+    <div class="post-tags">{entry.data.tags.map(tag => <a href={getTagUrl(tag)}># {tag}</a>)}<span class="post-count">{remarkPluginFrontmatter.words} 字 · {remarkPluginFrontmatter.minutes} 分钟</span></div>
+  </div>
+  {entry.data.image && <a class="post-card-cover" href={href} tabindex="-1" aria-hidden="true"><ImageWrapper src={entry.data.image} basePath={path.join("content/posts/", getDir(entry.id))} alt="" class="w-full h-full" /></a>}
+</article>
+<style>.post-count { color: var(--mc-on-surface-variant); font-size: .7rem; padding: .25rem; margin-left: auto; align-self: center; }</style>

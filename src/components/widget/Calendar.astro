@@ -1,0 +1,57 @@
+---
+import { getSortedPosts } from "../../utils/content-utils";
+import { url } from "../../utils/url-utils";
+
+const posts = await getSortedPosts();
+const dates = posts.map((post) =>
+	post.data.published.toISOString().slice(0, 10),
+);
+---
+<section class="card-base m3-widget" id="article-calendar" data-dates={JSON.stringify(dates)} data-archive={url("/archive/")} aria-label="文章日历">
+  <h2 class="m3-widget-title">日历</h2>
+  <div class="calendar-controls"><button type="button" data-calendar-prev aria-label="上个月">‹</button><span data-calendar-month aria-live="polite"></span><button type="button" data-calendar-next aria-label="下个月">›</button></div>
+  <div class="calendar-week" aria-hidden="true">{["一", "二", "三", "四", "五", "六", "日"].map(day => <span>{day}</span>)}</div>
+  <div class="calendar-days" data-calendar-days></div>
+  <a class="calendar-archive" href={url("/archive/")}>查看全部归档 ↗</a>
+</section>
+<script>
+const calendar = document.getElementById("article-calendar");
+if (calendar) {
+  const dates = new Set<string>(JSON.parse(calendar.dataset.dates || "[]"));
+  let month = new Date();
+  month = new Date(month.getFullYear(), month.getMonth(), 1);
+  const today = new Date();
+  function draw() {
+    if (!calendar) return;
+    const label = calendar.querySelector("[data-calendar-month]");
+    if (label) label.textContent = `${month.getFullYear()}年${month.getMonth() + 1}月`;
+    const grid = calendar.querySelector("[data-calendar-days]");
+    if (!grid) return;
+    grid.replaceChildren();
+    const offset = (month.getDay() + 6) % 7;
+    for (let i = 0; i < offset; i++) grid.append(document.createElement("span"));
+    const end = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    for (let day = 1; day <= end; day++) {
+      const date = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const element = document.createElement(dates.has(date) ? "a" : "span");
+      element.textContent = String(day);
+      if (element instanceof HTMLAnchorElement) { element.href = `${calendar.dataset.archive}?date=${date}`; element.title = `${date} 的文章`; element.classList.add("has-post"); }
+      if (day === today.getDate() && month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear()) element.setAttribute("aria-current", "date");
+      grid.append(element);
+    }
+  }
+  calendar.querySelector("[data-calendar-prev]")?.addEventListener("click", () => { month.setMonth(month.getMonth() - 1); draw(); });
+  calendar.querySelector("[data-calendar-next]")?.addEventListener("click", () => { month.setMonth(month.getMonth() + 1); draw(); });
+  draw();
+}
+</script>
+<style>
+  .calendar-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: .8rem; font-size: .9rem; color: var(--mc-on-surface); }
+  .calendar-controls button { width: 2rem; height: 2rem; border-radius: 50%; color: var(--primary); background: var(--btn-regular-bg); font-size: 1.4rem; }
+  .calendar-week, .calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .2rem; text-align: center; }
+  .calendar-week { font-size: .7rem; margin-bottom: .45rem; color: var(--mc-on-surface-variant); }
+  .calendar-days :global(span), .calendar-days :global(a) { font-size: .78rem; display: grid; place-items: center; min-height: 1.9rem; border-radius: 50%; }
+  .calendar-days :global([aria-current]) { background: var(--primary); color: var(--mc-on-primary); }
+  .calendar-days :global(.has-post) { box-shadow: inset 0 -3px var(--primary); font-weight: 700; }
+  .calendar-archive { display: block; text-align: center; margin-top: 1rem; font-size: .78rem; color: var(--primary); }
+</style>

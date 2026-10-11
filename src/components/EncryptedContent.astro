@@ -1,0 +1,47 @@
+---
+import { encryptProtectedContent } from "../utils/password-protection";
+
+const { password, scope, hint = "" } = Astro.props;
+const html = await Astro.slots.render("default");
+const payload = await encryptProtectedContent(
+	html,
+	String(password),
+	scope,
+	"text/html",
+);
+---
+<section class="encrypted-content" data-pagefind-ignore data-payload={JSON.stringify(payload)} data-scope={scope}>
+  <form class="unlock-form"><h2>这是一篇加密文章</h2><p>输入密码，解锁这段私藏的故事。</p>{hint && <p class="password-hint">提示：{hint}</p>}<label>文章密码<input type="password" autocomplete="off" required /></label><button type="submit">解锁文章</button><p class="unlock-status" aria-live="polite"></p></form>
+  <div class="unlocked-body" hidden></div>
+</section>
+<script>
+import { decryptProtectedContent, parseProtectedPayload } from "../utils/password-protection";
+function setupEncryption() {
+  document.querySelectorAll<HTMLElement>(".encrypted-content").forEach(container => {
+    if (container.dataset.ready) return;
+    container.dataset.ready = "true";
+    const form = container.querySelector<HTMLFormElement>("form");
+    const input = form?.querySelector<HTMLInputElement>("input");
+    const button = form?.querySelector<HTMLButtonElement>("button");
+    const status = container.querySelector<HTMLElement>(".unlock-status");
+    form?.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!input || !button) return;
+      button.disabled = true;
+      try {
+        const payload = parseProtectedPayload(JSON.parse(container.dataset.payload || "{}"));
+        const html = await decryptProtectedContent(payload, input.value, container.dataset.scope);
+        const body = container.querySelector<HTMLElement>(".unlocked-body");
+        if (body) { body.innerHTML = html; body.hidden = false; }
+        input.value = ""; form.hidden = true;
+        document.dispatchEvent(new CustomEvent("ui:markdown-unlocked"));
+      } catch { if (status) status.textContent = "密码不正确，请再试一次。"; }
+      finally { button.disabled = false; }
+    });
+  });
+}
+setupEncryption();
+if (window.swup) window.swup.hooks.on("page:view", setupEncryption);
+else document.addEventListener("swup:enable", () => window.swup.hooks.on("page:view", setupEncryption), { once: true });
+</script>
+<style>.unlock-form { text-align: center; padding: 2.5rem 1rem; } h2 { color: var(--primary); font-size: 1.3rem; font-weight: 700; margin-bottom: .8rem; } p { color: var(--mc-on-surface-variant); font-size: .9rem; } label { display: flex; flex-direction: column; max-width: 18rem; margin: 1.5rem auto .8rem; gap: .5rem; font-size: .8rem; text-align: left; } input { border-radius: 14px; background: var(--mc-surface-container); padding: .8rem; color: var(--mc-on-surface); border: 1px solid var(--line-color); } button { background: var(--primary); color: var(--mc-on-primary); border-radius: 99px; padding: .7rem 1.2rem; } button:disabled { opacity: .5; } .unlock-status { margin-top: 1rem; } .password-hint { margin-top: .5rem; }</style>

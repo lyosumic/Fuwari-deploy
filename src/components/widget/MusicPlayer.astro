@@ -1,0 +1,62 @@
+---
+import extras from "../../data/site-extras.json";
+import {
+	type ExtraEntry,
+	safeExternalUrl,
+	safeImageUrl,
+} from "../../utils/site-extras";
+
+const tracks = (extras.music as ExtraEntry[]).filter(
+	(track) =>
+		track.title &&
+		(safeImageUrl(track.source) || safeExternalUrl(track.source)),
+);
+---
+{tracks.length > 0 && <section class="card-base m3-widget music-player" data-tracks={JSON.stringify(tracks)} aria-label="音乐播放器">
+  <h2 class="m3-widget-title">音乐播放器</h2>
+  <p data-music-title>{tracks[0].title}</p><small data-music-artist>{tracks[0].artist}</small>
+  <audio preload="none"></audio>
+  <div class="music-controls"><button data-music-prev type="button" aria-label="上一曲">⏮</button><button data-music-play type="button" aria-label="播放">▶</button><button data-music-next type="button" aria-label="下一曲">⏭</button><button data-music-mode type="button" aria-label="切换播放模式" title="顺序播放">↪</button></div>
+  <label class="music-progress"><span data-music-time>0:00</span><input data-music-seek type="range" min="0" max="100" value="0" aria-label="播放进度" /><span data-music-duration>0:00</span></label>
+  <label class="music-volume">音量 <input data-music-volume type="range" min="0" max="1" step="0.05" value="0.7" aria-label="音量" /></label>
+  <details><summary>播放列表</summary><ol>{tracks.map((track, index) => <li><button type="button" data-music-track={index}>{track.title}<small>{track.artist}</small></button></li>)}</ol></details>
+</section>}
+<script>
+for (const player of document.querySelectorAll<HTMLElement>(".music-player")) {
+  const tracks = JSON.parse(player.dataset.tracks || "[]") as { title: string; artist?: string; source: string }[];
+  const audio = player.querySelector("audio");
+  if (!audio || !tracks.length) continue;
+  let current = 0;
+  let mode = 0;
+  const format = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+  const playButton = player.querySelector<HTMLButtonElement>("[data-music-play]");
+  function load(index: number, play = true) {
+    if (!audio) return;
+    current = (index + tracks.length) % tracks.length;
+    audio.src = tracks[current].source;
+    const title = player.querySelector("[data-music-title]"); if (title) title.textContent = tracks[current].title;
+    const artist = player.querySelector("[data-music-artist]"); if (artist) artist.textContent = tracks[current].artist || "";
+    if (play) audio.play().catch(() => { if (playButton) playButton.textContent = "▶"; });
+  }
+  audio.volume = .7;
+  playButton?.addEventListener("click", () => { if (!audio.src) load(current); else if (audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+  audio.addEventListener("play", () => { if (playButton) { playButton.textContent = "Ⅱ"; playButton.setAttribute("aria-label", "暂停"); } });
+  audio.addEventListener("pause", () => { if (playButton) { playButton.textContent = "▶"; playButton.setAttribute("aria-label", "播放"); } });
+  player.querySelector("[data-music-prev]")?.addEventListener("click", () => load(current - 1));
+  player.querySelector("[data-music-next]")?.addEventListener("click", () => load(mode === 2 ? Math.floor(Math.random() * tracks.length) : current + 1));
+  const modeButton = player.querySelector<HTMLButtonElement>("[data-music-mode]");
+  modeButton?.addEventListener("click", () => { mode = (mode + 1) % 3; modeButton.title = ["顺序播放", "单曲循环", "随机播放"][mode]; modeButton.textContent = ["↪", "↻", "⤨"][mode]; });
+  audio.addEventListener("ended", () => load(mode === 1 ? current : mode === 2 ? Math.floor(Math.random() * tracks.length) : current + 1));
+  audio.addEventListener("timeupdate", () => { const time = player.querySelector("[data-music-time]"); if (time) time.textContent = format(audio.currentTime); const duration = player.querySelector("[data-music-duration]"); if (duration) duration.textContent = format(audio.duration || 0); const seek = player.querySelector<HTMLInputElement>("[data-music-seek]"); if (seek) seek.value = String(audio.duration ? audio.currentTime / audio.duration * 100 : 0); });
+  player.querySelector<HTMLInputElement>("[data-music-seek]")?.addEventListener("input", event => { if (Number.isFinite(audio.duration)) audio.currentTime = Number((event.target as HTMLInputElement).value) / 100 * audio.duration; });
+  player.querySelector<HTMLInputElement>("[data-music-volume]")?.addEventListener("input", event => { audio.volume = Number((event.target as HTMLInputElement).value); });
+  player.querySelectorAll<HTMLElement>("[data-music-track]").forEach(button => button.addEventListener("click", () => load(Number(button.dataset.musicTrack))));
+}
+</script>
+<style>
+  [data-music-title] { font-size: .95rem; color: var(--mc-on-surface); font-weight: 600; } small { color: var(--mc-on-surface-variant); font-size: .75rem; }
+  .music-controls { display: flex; gap: .5rem; align-items: center; margin: 1rem 0; } .music-controls button { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--btn-regular-bg); color: var(--primary); }
+  [data-music-play] { background: var(--primary); color: var(--mc-on-primary); }
+  .music-progress, .music-volume { display: flex; gap: .5rem; font-size: .65rem; align-items: center; margin-bottom: .8rem; } input[type='range'] { min-width: 0; flex: 1; accent-color: var(--primary); }
+  summary { font-size: .8rem; color: var(--primary); cursor: pointer; } li button { text-align: left; display: flex; flex-direction: column; gap: .2rem; width: 100%; padding: .5rem; font-size: .8rem; }
+</style>

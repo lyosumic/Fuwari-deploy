@@ -1,0 +1,28 @@
+---
+import { uiConfig } from "../ui-config";
+
+const config = uiConfig.comments;
+---
+{config.enable && config.repo && config.repoId && config.categoryId && <section class="card-base comments-box" data-comments={JSON.stringify(config)}><h2 class="m3-widget-title">评论</h2><button type="button" data-load-comments>加载 GitHub 评论</button><div class="giscus"></div></section>}
+<script>
+function setupComments() {
+  document.querySelectorAll<HTMLElement>(".comments-box").forEach(container => {
+    const button = container.querySelector<HTMLButtonElement>("[data-load-comments]");
+    if (!button || button.dataset.ready) return;
+    button.dataset.ready = "true";
+    button.onclick = () => {
+      const config = JSON.parse(container.dataset.comments || "{}");
+      const script = document.createElement("script");
+      script.src = "https://giscus.app/client.js"; script.async = true; script.crossOrigin = "anonymous";
+      const data = { repo: config.repo, "repo-id": config.repoId, category: config.category, "category-id": config.categoryId, mapping: "pathname", strict: "1", "reactions-enabled": "1", "emit-metadata": "0", "input-position": "top", theme: document.documentElement.classList.contains("dark") ? "dark" : "light", lang: "zh-CN", loading: "lazy" };
+      for (const [name, value] of Object.entries(data)) script.setAttribute(`data-${name}`, String(value));
+      container.querySelector(".giscus")?.append(script);
+      button.remove();
+    };
+  });
+}
+setupComments();
+if (window.swup) window.swup.hooks.on("page:view", setupComments);
+else document.addEventListener("swup:enable", () => window.swup.hooks.on("page:view", setupComments), { once: true });
+</script>
+<style>.comments-box { padding: 1.5rem; margin-bottom: 1rem; } button { padding: .7rem 1rem; border-radius: 99px; background: var(--btn-regular-bg); color: var(--primary); font-size: .85rem; }</style>

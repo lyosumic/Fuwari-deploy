@@ -41,6 +41,10 @@ collections:
       - { label: 发布日期, name: published, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD }
       - { label: 更新日期, name: updated, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD, required: false }
       - { label: 隐藏为草稿, name: draft, widget: boolean, default: false, hint: '默认公开。打开此开关会隐藏文章；保存后需等待网站成功部署。' }
+      - { label: 置顶文章, name: pinned, widget: boolean, default: false, required: false }
+      - { label: 加密文章, name: encrypted, widget: boolean, default: false, required: false }
+      - { label: 阅读密码, name: password, widget: string, required: false, hint: '密码仅用于构建加密正文；源码仓库仍可看到原文和密码，请按需使用私有仓库。' }
+      - { label: 密码提示, name: passwordHint, widget: string, required: false }
       - { label: 摘要, name: description, widget: text, required: false, default: '' }
       - { label: 封面图片, name: image, widget: image, required: false, default: '' }
       - { label: 标签（可多选）, name: tags, widget: taxonomy, kind: tags, required: false, default: [], hint: '选择历史标签或输入新标签，可添加多个。标签库可在个人简介与设置中管理。' }
@@ -170,3 +174,141 @@ collections:
         file: src/content/spec/about.md
         fields:
           - { label: 正文, name: body, widget: import-markdown }
+
+      - name: site_extras
+        label: 动态、相册与收藏
+        file: src/data/site-extras.json
+        fields:
+          - label: 动态
+            name: moments
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+              - { label: 正文, name: content, widget: import-markdown, required: false, default: '' }
+              - label: 图片
+                name: images
+                widget: list
+                required: false
+                default: []
+                fields:
+                  - { label: 图片, name: src, widget: image }
+                  - { label: 说明, name: alt, widget: string, required: false, default: '' }
+          - label: 相册
+            name: albums
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+              - label: 图片
+                name: images
+                widget: list
+                required: false
+                default: []
+                fields:
+                  - { label: 图片, name: src, widget: image }
+                  - { label: 说明, name: alt, widget: string, required: false, default: '' }
+          - label: 站点罗盘
+            name: compass
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+          - label: 时间线
+            name: timeline
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+              - { label: 正文, name: content, widget: import-markdown, required: false, default: '' }
+          - label: 设备
+            name: devices
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+          - label: 技能
+            name: skills
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+              - { label: 熟练度（0-100）, name: level, widget: number, min: 0, max: 100, default: 0, required: false }
+          - label: 游戏
+            name: games
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+          - label: 音乐
+            name: music
+            widget: list
+            required: false
+            default: []
+            fields:
+              - { label: 标识, name: id, widget: string, required: false, default: '' }
+              - { label: 标题, name: title, widget: string, required: true, default: '' }
+              - { label: 描述, name: description, widget: text, required: false, default: '' }
+              - { label: 分类, name: category, widget: string, required: false, default: '' }
+              - { label: 日期（YYYY-MM-DD）, name: date, widget: string, required: false, default: '' }
+              - { label: 链接, name: url, widget: string, required: false, default: '' }
+              - { label: 封面, name: image, widget: image, required: false, default: '' }
+              - { label: 状态, name: status, widget: string, required: false, default: '' }
+              - { label: 艺术家, name: artist, widget: string, required: false, default: '' }
+              - { label: 音频, name: source, widget: file, required: true, hint: '上传有权分享的音频，或填写音频地址。' }

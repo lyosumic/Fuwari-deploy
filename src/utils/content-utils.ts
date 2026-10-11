@@ -2,7 +2,9 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils.ts";
+import { isEncryptedPost } from "./post-encryption";
 import { normalizeTags } from "./tags-utils";
+import { normalizeTerms } from "./taxonomy-utils";
 
 // // Retrieve posts and sort them by publication date
 async function getRawSortedPosts() {
@@ -14,16 +16,18 @@ async function getRawSortedPosts() {
 		...post,
 		data: {
 			...post.data,
-			category: post.data.category?.trim() || "",
+			category: normalizeTerms(post.data.category),
 			tags: normalizeTags(post.data.tags),
 		},
 	}));
 	const sorted = normalizedPosts.sort((a, b) => {
 		return (
+			Number(b.data.pinned) - Number(a.data.pinned) ||
 			b.data.published.getTime() - a.data.published.getTime() ||
 			a.slug.localeCompare(b.slug)
 		);
 	});
+	for (const post of sorted) isEncryptedPost(post.data);
 	return sorted;
 }
 
@@ -51,7 +55,9 @@ export async function getSortedPostsList(): Promise<PostForList[]> {
 	// delete post.body
 	const sortedPostsList = sortedFullPosts.map((post) => ({
 		slug: post.slug,
-		data: post.data,
+		data: Object.fromEntries(
+			Object.entries(post.data).filter(([key]) => key !== "password"),
+		) as Omit<CollectionEntry<"posts">["data"], "password">,
 	}));
 
 	return sortedPostsList;
@@ -93,19 +99,11 @@ export async function getCategoryList(): Promise<Category[]> {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
 	const count = Object.create(null) as Record<string, number>;
-	allBlogPosts.forEach((post: { data: { category: string | null } }) => {
-		if (!post.data.category?.trim()) {
-			const ucKey = i18n(I18nKey.uncategorized);
-			count[ucKey] = count[ucKey] ? count[ucKey] + 1 : 1;
-			return;
-		}
-
-		const categoryName =
-			typeof post.data.category === "string"
-				? post.data.category.trim()
-				: String(post.data.category).trim();
-
-		count[categoryName] = count[categoryName] ? count[categoryName] + 1 : 1;
+	let uncategorizedCount = 0;
+	allBlogPosts.forEach((post) => {
+		const categories = normalizeTerms(post.data.category);
+		if (!categories.length) uncategorizedCount++;
+		for (const name of categories) count[name] = (count[name] || 0) + 1;
 	});
 
 	const lst = Object.keys(count).sort((a, b) => {
@@ -120,5 +118,11 @@ export async function getCategoryList(): Promise<Category[]> {
 			url: getCategoryUrl(c),
 		});
 	}
+	if (uncategorizedCount)
+		ret.push({
+			name: i18n(I18nKey.uncategorized),
+			count: uncategorizedCount,
+			url: getCategoryUrl(null),
+		});
 	return ret;
 }

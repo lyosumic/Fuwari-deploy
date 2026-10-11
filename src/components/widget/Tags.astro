@@ -3,7 +3,7 @@
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
 import { getTagList } from "../../utils/content-utils";
-import { getTagUrl } from "../../utils/url-utils";
+import { getTagUrl, url } from "../../utils/url-utils";
 import ButtonTag from "../control/ButtonTag.astro";
 import WidgetLayout from "./WidgetLayout.astro";
 
@@ -28,4 +28,6 @@ const style = Astro.props.style;
             </ButtonTag>
         ))}
     </div>
+    <a class="all-tags" href={url("/tags/")}>查看全部标签 ↗</a>
 </WidgetLayout>
+<style>.all-tags { display: block; margin-top: 1rem; font-size: .75rem; color: var(--primary); }</style>

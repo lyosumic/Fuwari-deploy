@@ -1,0 +1,10 @@
+---
+import { uiConfig } from "../../ui-config";
+import { url } from "../../utils/url-utils";
+---
+<section class="card-base m3-widget">
+  <h2 class="m3-widget-title">公告</h2>
+  <p class="announcement">{uiConfig.announcement}</p>
+  <a class="announcement-link" href={url("/projects/")}>看看最近的作品 ↗</a>
+</section>
+<style>.announcement { font-size: .9rem; line-height: 1.8; color: var(--mc-on-surface-variant); } .announcement-link { color: var(--primary); font-size: .8rem; display: inline-block; margin-top: .8rem; }</style>

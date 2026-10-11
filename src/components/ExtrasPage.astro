@@ -1,0 +1,80 @@
+---
+import { Icon } from "astro-icon/components";
+import MarkdownIt from "markdown-it";
+import sanitizeHtml from "sanitize-html";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import {
+	type ExtraModule,
+	extraModules,
+	getExtraEntries,
+	safeExternalUrl,
+	safeImageUrl,
+} from "../utils/site-extras";
+import CollectionHeader from "./CollectionHeader.astro";
+
+const { module } = Astro.props as { module: ExtraModule };
+const info = extraModules[module];
+const entries = getExtraEntries(module);
+const categories = [
+	...new Set(entries.map((entry) => entry.category || "全部")),
+];
+const parser = new MarkdownIt({ html: false, linkify: true });
+---
+<MainGridLayout title={info.title} description={info.subtitle}>
+  <CollectionHeader title={info.title} description={info.subtitle} eyebrow="COLLECT & REMEMBER" icon={info.icon} count={entries.length} unit="条记录" />
+  {categories.length > 1 && <nav class="card-base m3-category-strip extra-filters" aria-label="分类筛选"><button type="button" data-extra-filter="all" aria-pressed="true">全部</button>{categories.map(category => <button type="button" data-extra-filter={category} aria-pressed="false">{category}</button>)}</nav>}
+  <div class:list={["extras-list", { "extras-timeline": module === "timeline" || module === "moments", "extras-grid": module !== "timeline" && module !== "moments" }]}>
+    {entries.map(entry => <article class="card-base extra-entry" data-extra-category={entry.category || "全部"}>
+      {entry.image && safeImageUrl(entry.image) && <img src={safeImageUrl(entry.image)} alt={entry.title} loading="lazy" class="extra-cover" />}
+      <div class="extra-body">
+        <div class="extra-meta">{entry.date && <time datetime={entry.date}>{entry.date}</time>}{entry.category && <span>{entry.category}</span>}{entry.status && <span>{entry.status}</span>}</div>
+        <h2>{safeExternalUrl(entry.url) ? <a href={safeExternalUrl(entry.url)} target="_blank" rel="noopener noreferrer">{entry.title} ↗</a> : entry.title}</h2>
+        {entry.description && <p>{entry.description}</p>}
+        {entry.content && <div class="extra-markdown custom-md" set:html={sanitizeHtml(parser.render(entry.content))}></div>}
+        {module === "skills" && typeof entry.level === "number" && <div class="skill-meter"><meter min="0" max="100" value={Math.max(0, Math.min(100, entry.level))} aria-label={entry.title}></meter><span>{Math.max(0, Math.min(100, entry.level))}%</span></div>}
+        {entry.images?.length && <div class="extra-images">{entry.images.filter(image => safeImageUrl(image.src)).map(image => <a href={safeImageUrl(image.src)} data-extra-image data-no-swup><img src={safeImageUrl(image.src)} alt={image.alt || entry.title} loading="lazy" /></a>)}</div>}
+      </div>
+    </article>)}
+  </div>
+  {!entries.length && <section class="card-base extra-empty"><Icon name={info.icon} class="text-5xl mx-auto mb-5 text-[var(--primary)]" /><h2>新的故事，正在酝酿</h2><p>这里会慢慢收藏我的{info.title}。</p></section>}
+  <dialog id="album-viewer" aria-label="查看照片"><button type="button" data-album-close aria-label="关闭照片">×</button><img alt="" /><p></p></dialog>
+</MainGridLayout>
+<script>
+function setupExtras() {
+  document.querySelectorAll<HTMLButtonElement>("[data-extra-filter]").forEach(button => {
+    button.onclick = () => {
+      document.querySelectorAll("[data-extra-filter]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+      document.querySelectorAll<HTMLElement>("[data-extra-category]").forEach(item => { item.hidden = button.dataset.extraFilter !== "all" && item.dataset.extraCategory !== button.dataset.extraFilter; });
+    };
+  });
+  const viewer = document.querySelector<HTMLDialogElement>("#album-viewer");
+  document.querySelectorAll<HTMLAnchorElement>("[data-extra-image]").forEach(link => {
+    link.onclick = event => {
+      if (!viewer) return;
+      event.preventDefault();
+      const image = viewer.querySelector("img");
+      if (image) { image.src = link.href; image.alt = link.querySelector("img")?.alt || ""; }
+      const caption = viewer.querySelector("p");
+      if (caption) caption.textContent = image?.alt || "";
+      viewer.showModal();
+    };
+  });
+  viewer?.querySelector("[data-album-close]")?.addEventListener("click", () => viewer.close());
+  viewer?.addEventListener("click", event => { if (event.target === viewer) viewer.close(); });
+}
+setupExtras();
+if (window.swup) window.swup.hooks.on("page:view", setupExtras);
+else document.addEventListener("swup:enable", () => window.swup.hooks.on("page:view", setupExtras), { once: true });
+</script>
+<style>
+  .extras-list { gap: 1rem; display: grid; margin-bottom: 1rem; } .extras-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .extra-entry { min-width: 0; } .extra-entry[hidden] { display: none; } .extra-body { padding: 1.5rem; }
+  .extra-cover { width: 100%; height: 13rem; object-fit: cover; } .extra-meta { font-size: .75rem; color: var(--primary); display: flex; gap: .8rem; margin-bottom: .8rem; }
+  h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: .7rem; color: var(--mc-on-surface); } p { line-height: 1.8; color: var(--mc-on-surface-variant); font-size: .9rem; }
+  .extra-markdown { margin-top: 1rem; } .extra-images { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: 1rem; } .extra-images img { width: 100%; height: 8rem; object-fit: cover; border-radius: 14px; }
+  .extras-timeline .extra-entry { border-left: 4px solid var(--primary); } .extra-empty { text-align: center; padding: 4rem 1.5rem; }
+  .skill-meter { display: flex; gap: .7rem; align-items: center; margin-top: 1rem; color: var(--primary); font-size: .75rem; } meter { flex: 1; height: 1rem; accent-color: var(--primary); }
+  .extra-filters button { padding: .4rem .8rem; border-radius: 99px; font-size: .8rem; color: var(--primary); background: var(--btn-regular-bg); } .extra-filters button[aria-pressed='true'] { color: var(--mc-on-primary); background: var(--primary); }
+  dialog { max-width: min(92vw, 70rem); max-height: 92dvh; padding: 1rem; border: 0; border-radius: 24px; background: var(--card-bg); color: var(--mc-on-surface); } dialog::backdrop { background: rgb(0 0 0 / .75); } dialog img { max-height: 78dvh; max-width: 100%; margin: auto; object-fit: contain; } dialog button { position: absolute; right: 1rem; top: 1rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--primary); color: var(--mc-on-primary); font-size: 1.5rem; }
+  @media (max-width: 639px) { .extras-grid { grid-template-columns: minmax(0, 1fr); } }
+</style>

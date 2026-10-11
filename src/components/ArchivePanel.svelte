@@ -3,6 +3,7 @@ import { onMount } from "svelte";
 
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
+import { normalizeTerms } from "../utils/taxonomy-utils";
 import { getPostUrlBySlug } from "../utils/url-utils";
 
 export let tags: string[] = [];
@@ -19,7 +20,7 @@ interface Post {
 	data: {
 		title: string;
 		tags: string[];
-		category?: string | null;
+		category?: string | string[] | null;
 		published: Date;
 	};
 }
@@ -53,13 +54,23 @@ onMount(async () => {
 	}
 
 	if (categories.length > 0) {
-		filteredPosts = filteredPosts.filter(
-			(post) => post.data.category && categories.includes(post.data.category),
+		filteredPosts = filteredPosts.filter((post) =>
+			normalizeTerms(post.data.category).some((category) =>
+				categories.includes(category),
+			),
 		);
 	}
 
 	if (uncategorized) {
-		filteredPosts = filteredPosts.filter((post) => !post.data.category);
+		filteredPosts = filteredPosts.filter(
+			(post) => !normalizeTerms(post.data.category).length,
+		);
+	}
+	const date = params.get("date");
+	if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+		filteredPosts = filteredPosts.filter(
+			(post) => post.data.published.toISOString().slice(0, 10) === date,
+		);
 	}
 
 	const grouped = filteredPosts.reduce(

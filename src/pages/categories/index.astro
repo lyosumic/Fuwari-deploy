@@ -1,0 +1,9 @@
+---
+import CollectionHeader from "../../components/CollectionHeader.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { getCategoryList } from "../../utils/content-utils";
+
+const categories = await getCategoryList();
+---
+<MainGridLayout title="分类"><CollectionHeader title="分类" description="按主题翻阅我的记录。" eyebrow="EXPLORE BY TOPIC" icon="material-symbols:folder-outline-rounded" count={categories.length} unit="个分类" /><section class="card-base p-6"><div class="taxonomy-cloud">{categories.map(category => <a href={category.url}>{category.name}<span>{category.count}</span></a>)}</div></section></MainGridLayout>
+<style>.taxonomy-cloud { display: flex; flex-wrap: wrap; gap: .8rem; } a { padding: .8rem 1rem; border-radius: 16px; background: var(--btn-regular-bg); color: var(--primary); } span { margin-left: .8rem; font-size: .75rem; }</style>

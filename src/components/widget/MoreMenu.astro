@@ -1,0 +1,34 @@
+---
+import { url } from "../../utils/url-utils";
+
+const items = [
+	["动态", "/moments/"],
+	["相册", "/albums/"],
+	["站点罗盘", "/compass/"],
+	["时间线", "/timeline/"],
+	["我的设备", "/devices/"],
+	["技能", "/skills/"],
+	["游戏", "/games/"],
+	["关于", "/about/"],
+];
+---
+<details class="more-menu">
+  <summary class="btn-plain nav-link font-bold">更多 <span aria-hidden="true">⌄</span></summary>
+  <nav class="more-panel" aria-label="更多页面">{items.map(([name, path]) => <a href={url(path)}>{name}<span aria-hidden="true">↗</span></a>)}<a href="https://github.com/lyosumic" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></nav>
+</details>
+<script>
+document.addEventListener("click", event => {
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>(".more-menu[open]")) if (!menu.contains(event.target as Node)) menu.open = false;
+});
+document.addEventListener("keydown", event => { if (event.key === "Escape") document.querySelectorAll<HTMLDetailsElement>(".more-menu").forEach(menu => { menu.open = false; }); });
+document.addEventListener("click", event => { if ((event.target as Element).closest(".more-panel a")) document.querySelectorAll<HTMLDetailsElement>(".more-menu").forEach(menu => { menu.open = false; }); });
+</script>
+<style>
+  .more-menu { position: relative; }
+  summary { cursor: pointer; list-style: none; padding: .6rem .9rem; display: flex; align-items: center; gap: .35rem; border-radius: 99px; white-space: nowrap; }
+  summary::-webkit-details-marker { display: none; }
+  .more-panel { position: absolute; top: calc(100% + 1rem); left: -1rem; width: 12rem; padding: .5rem; border-radius: 20px; background: var(--float-panel-bg); box-shadow: 0 12px 36px rgb(0 0 0 / .15); z-index: 90; }
+  .more-panel a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .65rem .9rem; border-radius: 12px; color: var(--mc-on-surface); font-size: .85rem; }
+  .more-panel a:hover { background: var(--btn-regular-bg); color: var(--primary); }
+  .more-panel a span { opacity: .4; }
+</style>

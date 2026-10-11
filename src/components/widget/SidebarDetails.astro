@@ -1,0 +1,11 @@
+---
+import type { MarkdownHeading } from "astro";
+import { siteConfig } from "../../config";
+import Calendar from "./Calendar.astro";
+import Statistics from "./Statistics.astro";
+import TOC from "./TOC.astro";
+
+const { headings = [] } = Astro.props as { headings?: MarkdownHeading[] };
+---
+<Statistics /><Calendar />
+<section class="card-base m3-widget m3-toc"><div id="toc" data-has-toc={siteConfig.toc.enable && headings.length > 0}>{siteConfig.toc.enable && <><h2 class="m3-widget-title">文章目录</h2><TOC headings={headings} /></>}</div></section>

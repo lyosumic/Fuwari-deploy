@@ -1,0 +1,58 @@
+<script>
+import { applyUiPreferences } from "../utils/ui-preferences";
+import { uiConfig } from "../ui-config";
+const slides = [...document.querySelectorAll<HTMLElement>(".hero-slide")];
+let slide = 0;
+if (slides.length > 1) window.setInterval(() => {
+  if (document.hidden || document.documentElement.dataset.reducedMotion === "true" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  slides[slide].classList.remove("is-active"); slide = (slide + 1) % slides.length; slides[slide].classList.add("is-active");
+}, Math.max(3000, uiConfig.bannerInterval));
+const heroText = document.querySelector<HTMLElement>("[data-hero-text]");
+if (heroText?.dataset.typewriter === "true" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const subtitles = JSON.parse(heroText.dataset.subtitles || "[]") as string[];
+  let sentence = 0; let length = 0; let deleting = false;
+  function type() {
+    if (!heroText || !subtitles.length) return;
+    if (document.documentElement.dataset.reducedMotion === "true") { heroText.textContent = subtitles[0]; window.setTimeout(type, 1000); return; }
+    const text = subtitles[sentence]; length += deleting ? -1 : 1; heroText.textContent = text.slice(0, Math.max(0, length));
+    let wait = deleting ? 50 : 100;
+    if (!deleting && length >= text.length) { deleting = true; wait = 2500; }
+    else if (deleting && length <= 0) { deleting = false; sentence = (sentence + 1) % subtitles.length; wait = 500; }
+    window.setTimeout(type, wait);
+  }
+  type();
+}
+function refreshUi() {
+  const home = new URL(import.meta.env.BASE_URL, location.origin).pathname.replace(/\/$/, "") || "/";
+  const path = location.pathname.replace(/\/$/, "") || "/";
+  const isHome = path === home || /^\d+$/.test(path.slice(home === "/" ? 1 : home.length + 1));
+  document.body.classList.toggle("is-home", isHome);
+  document.documentElement.removeAttribute("data-navigating");
+  applyUiPreferences();
+  updateProgress();
+}
+function updateProgress() {
+  const height = document.documentElement.scrollHeight - innerHeight;
+  document.documentElement.style.setProperty("--reading-progress", `${height > 0 ? Math.min(100, Math.max(0, scrollY / height * 100)) : 0}%`);
+}
+function connect() {
+  window.swup.hooks.on("visit:start", () => document.documentElement.setAttribute("data-navigating", "true"));
+  window.swup.hooks.on("page:view", refreshUi);
+}
+document.addEventListener("ui:color-change", applyUiPreferences);
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  for (const id of ["display-setting", "nav-menu-panel", "search-panel"]) document.getElementById(id)?.classList.add("float-panel-closed");
+  document.getElementById("nav-menu-switch")?.setAttribute("aria-expanded", "false");
+});
+window.addEventListener("scroll", updateProgress, { passive: true });
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if ((localStorage.getItem("theme") || "auto") === "auto") {
+    document.documentElement.classList.toggle("dark", matchMedia("(prefers-color-scheme: dark)").matches);
+    applyUiPreferences();
+  }
+});
+if (window.swup) connect();
+else document.addEventListener("swup:enable", connect, { once: true });
+refreshUi();
+</script>

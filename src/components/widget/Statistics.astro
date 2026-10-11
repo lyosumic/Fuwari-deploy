@@ -1,0 +1,62 @@
+---
+import { uiConfig } from "../../ui-config";
+import {
+	getCategoryList,
+	getSortedPosts,
+	getTagList,
+} from "../../utils/content-utils";
+import { getNotes } from "../../utils/notes-utils";
+import { getProjects } from "../../utils/projects-utils";
+
+const [posts, notes, projects, categories, tags] = await Promise.all([
+	getSortedPosts(),
+	getNotes(),
+	getProjects(),
+	getCategoryList(),
+	getTagList(),
+]);
+const words = posts.reduce(
+	(sum, post) => sum + (post.body?.replace(/\s/g, "").length || 0),
+	0,
+);
+const lastUpdate = [
+	...posts.map((post) => post.data.updated || post.data.published),
+	...notes.map((note) => note.data.updated),
+	...projects.map((project) => project.data.updated || project.data.published),
+]
+	.filter((date): date is Date => date instanceof Date)
+	.sort((a, b) => b.getTime() - a.getTime())[0];
+const earliest = posts.length
+	? Math.min(...posts.map((post) => post.data.published.getTime()))
+	: Date.now();
+const days = Math.max(
+	0,
+	Math.floor(
+		(Date.now() -
+			(uiConfig.startDate
+				? new Date(uiConfig.startDate).getTime()
+				: earliest)) /
+			86400000,
+	),
+);
+const stats = [
+	["文章", posts.length],
+	["笔记", notes.length],
+	["项目", projects.length],
+	["分类", categories.length],
+	["标签", tags.length],
+	["总字数", words.toLocaleString("zh-CN")],
+	[uiConfig.startDate ? "运行天数" : "记录天数", days],
+];
+---
+<section class="card-base m3-widget" aria-label="站点统计">
+  <h2 class="m3-widget-title">统计</h2>
+  <dl>{stats.map(([label, value]) => <div class="stat-row"><dt>{label}</dt><span aria-hidden="true"></span><dd>{value}</dd></div>)}</dl>
+  {lastUpdate && <p class="last-update">最近更新 <time datetime={lastUpdate.toISOString()}>{lastUpdate.toISOString().slice(0, 10)}</time></p>}
+</section>
+<style>
+  .stat-row { display: flex; align-items: baseline; gap: .6rem; margin: .7rem 0; font-size: .8rem; color: var(--mc-on-surface-variant); }
+  .stat-row span { flex: 1; border-bottom: 2px dotted var(--line-color); }
+  dd { font-weight: 700; color: var(--mc-on-surface); }
+  .last-update { font-size: .75rem; color: var(--mc-on-surface-variant); border-top: 1px solid var(--line-color); margin-top: 1rem; padding-top: .8rem; display: flex; justify-content: space-between; gap: .5rem; }
+</style>
